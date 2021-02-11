@@ -34,6 +34,10 @@ pub struct TreeEntryBody {
     // XXX: mb flags locally?
     //pub flags: Option<FlagsEn<String, RefCell<ParentString>>>
     //pub flags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hidden: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub comment: Option<String>,
 }
 
 impl TreeEntryBody {}
@@ -69,6 +73,8 @@ impl From<&Node> for TreeEntryBody {
             size: node.size,
             file_type: node.file_type.clone(),
             compare: node.compare,
+            hidden: node.hidden,
+            comment: node.comment.clone(),
         }
     }
 }

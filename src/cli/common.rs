@@ -34,7 +34,6 @@ pub const CMD_LS_TEXT: &str = "list tracked files";
 ///  - `-D, --default`
 ///
 ///  - `-N, --name`
-///  - `-D, --description`
 ///  - `-T, --type`
 ///  - `-S, --size`
 ///  - `-C, --created`
@@ -43,6 +42,10 @@ pub const CMD_LS_TEXT: &str = "list tracked files";
 //  XXX: mb -R, --recourse
 ///  - `-H, --children`
 ///  - `-G, --tags`
+///
+///  - `-D, --description`
+///  - `-H, --hidden`
+///  - `-C, --comment`
 ///
 pub const CMD_INIT: &str = "init";
 pub const CMD_INIT_TEXT: &str = "initialize file tree";

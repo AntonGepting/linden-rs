@@ -24,8 +24,6 @@ impl<'a, 'b> Cli<'a, 'b> {
     //
     // XXX: prog init -o output.yml -cfg?
     pub fn cmd_init(matches: &ArgMatches) {
-        // init
-        //if let Some(matches) = matches.subcommand_matches(CMD_INIT) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
         // get working dir
@@ -60,12 +58,10 @@ impl<'a, 'b> Cli<'a, 'b> {
         if !db.exists() || matches.is_present(KEY_FORCE) {
             // init & save new tree from given path
             let file_tree = Node::create_from_path_ext(&path, ignore_list, bitflag).unwrap();
-            //dbg!(&file_tree);
             file_tree.save(&db).unwrap();
         } else {
             error!("db already exists: {:?}", db);
         }
-        //}
     }
 
     pub fn cmd_status(matches: &ArgMatches) {

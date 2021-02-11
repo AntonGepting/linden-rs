@@ -16,37 +16,54 @@ use std::fs::DirEntry;
 use std::path::{Component, Path, PathBuf};
 use std::rc::{Rc, Weak};
 
+/// default/child pointer
 type NodeRc = Rc<RefCell<NodeData>>;
+/// parent pointer
 type NodeWeak = Weak<RefCell<NodeData>>;
 
+/// newtype wrapper
 #[derive(Debug, Clone, Default)]
 pub struct Node(NodeRc);
 
+/// main structure holding data
 #[derive(Debug, Clone, Default)]
 pub struct NodeData {
+    /// file/directory/symlink name
     pub file: OsString,
     // XXX: mb custom deserializer?
     pub parent: Option<NodeWeak>,
+    /// children nodes, if it's a directory
     pub children: Option<Vec<Node>>,
+    /// description
     pub desc: Option<String>,
     // XXX: tags not supported now
+    /// tags based on a program name, type, contents
     pub tags: Option<Vec<String>>,
+    /// sha256 hash
     pub sha256: Option<String>,
+    /// ?
     pub status: Option<usize>,
+    /// last modification date time
     pub modified: Option<String>,
+    /// last access date time
     pub accessed: Option<String>,
+    /// creation date time
     pub created: Option<String>,
+    /// file size
     pub size: Option<u64>,
     // XXX: type into file/dir fields mb.?
+    /// file, directory, symlink
     pub file_type: Option<FileType>,
+    /// ?
     pub compare: Option<usize>,
     // XXX: mb flags locally?
     //pub flags: Option<FlagsEn<String, RefCell<ParentString>>>
     //pub flags: Option<Vec<String>>,
+    /// hide node from the standard filter output
+    pub hidden: Option<bool>,
+    /// user's comment
+    pub comment: Option<String>,
 }
-
-//#[derive(Debug, Clone, Default)]
-//pub struct Node(NodeRc);
 
 impl Node {
     // add child, create children vector if not exist (for first child)
@@ -325,19 +342,23 @@ impl Node {
         Ok(node)
     }
 
-    // fill parent field for all tree
-    //pub fn fill_parent(&mut self) {
-    //let parent = Rc::new(RefCell::new(self.to_owned()));
-    //if let Some(body) = self.first_body_mut() {
-    //if let Some(children) = &mut body.children {
-    //for child in children {
-    //if let Some(body) = child.first_body_mut() {
-    //body.parent = Some(Rc::clone(&parent));
-    //child.fill_parent();
-    //}
-    //}
-    //}
-    //}
+    pub fn desc(&self, desc: Option<String>) {
+        self.borrow_mut().desc = desc;
+    }
+
+    pub fn comment(&self, comment: Option<String>) {
+        self.borrow_mut().comment = comment;
+    }
+
+    pub fn hidden(&self, hidden: Option<bool>) {
+        self.borrow_mut().hidden = hidden;
+    }
+
+    /// init fields
+    //pub fn init(&self, desc: Option<String>, comment: Option<String>) {
+    //let mut node = self.borrow_mut();
+    //node.desc = desc;
+    //node.comment = comment;
     //}
 
     pub fn find(&self, name: &str) {

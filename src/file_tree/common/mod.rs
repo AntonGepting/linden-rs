@@ -17,6 +17,7 @@ pub const NODE_COMPARE: usize = 1 << 10;
 pub const NODE_TAGS: usize = 1 << 11;
 pub const NODE_FULL_PATH: usize = 1 << 12;
 pub const NODE_COMMENT: usize = 1 << 13;
+pub const NODE_HIDDEN: usize = 1 << 14;
 
 pub const SORT_ASC: usize = 1 << 23;
 pub const SORT_DSC: usize = 1 << 24;
