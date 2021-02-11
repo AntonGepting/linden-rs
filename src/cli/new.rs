@@ -362,8 +362,8 @@ impl<'a, 'b> Cli<'a, 'b> {
             )
             // delete
             .subcommand(
-                SubCommand::with_name(CMD_DELETE)
-                    .about(CMD_DELETE_TEXT)
+                SubCommand::with_name(CMD_RM)
+                    .about(CMD_RM_TEXT)
                     .arg(
                         Arg::with_name(KEY_DB)
                             .short(KEY_DB_SHORT)

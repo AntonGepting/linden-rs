@@ -3,9 +3,8 @@ use crate::cli::common::*;
 use crate::error::Error;
 use crate::mylog::Log;
 use clap::{App, ArgMatches};
-//use file_tree::tree_entry::tree_entry::{COMPARE_ASC, COMPARE_DSC};
 
-use crate::file_tree::{FileTree, Node, NODE_DEFAULT, NODE_NONE};
+use crate::file_tree::{FileTree, Node, NODE_DEFAULT, NODE_NONE, SORT_DSC};
 use log::LevelFilter;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -17,51 +16,46 @@ pub struct Cli<'a, 'b> {
 }
 
 impl<'a, 'b> Cli<'a, 'b> {
-    //pub fn debug() {
-    //}
-
     // XXX: functions getting parameters already converted from strings in acceptable format?
     //
     // XXX: prog init -o output.yml -cfg?
     pub fn cmd_init(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        // if db exists and no overwrite flag is given
+        if db.exists() && !matches.is_present(KEY_FORCE) {
+            error!("db already exists: {:?}", db);
+            return;
+        }
+
         // get working dir
         //let path = PathBuf::from(".");
         let path = PathBuf::from(matches.value_of(KEY_DIR).unwrap_or(DEFAULT_DIR_FILENAME));
-
-        // get bitflags
-        let mut bitflag = Cli::get_bitflag(matches);
-        // if none given use defaults
-        if bitflag == NODE_NONE {
-            bitflag = NODE_DEFAULT;
+        if !path.exists() {
+            error!("file or path not exists: {:?}", path);
+            return;
         }
 
+        // get bitflags, or use defaults
+        let mut bitflag = Cli::get_bitflag(matches).unwrap_or(NODE_DEFAULT);
+
         // get ignore list
-        //
+        // XXX: check return
         let files: Vec<String> = matches
             .values_of(KEY_IGNORE)
             .unwrap()
             .map(|s| s.to_string())
             .collect();
-        let ignore_list = Some(&files);
+        let ignore = Some(&files);
 
         debug!(
-            "recieved subcommand: {} {:?} {:?} {:?}",
-            CMD_INIT,
-            &path,
-            &db,
-            ignore_list.as_ref()
+            "recieved subcommand: {} {:?} {:?} {:?} {:#x}",
+            CMD_INIT, &path, &db, &ignore, bitflag
         );
 
-        // if db not exists or overwrite flag is given, write new db
-        if !db.exists() || matches.is_present(KEY_FORCE) {
-            // init & save new tree from given path
-            let file_tree = Node::create_from_path_ext(&path, ignore_list, bitflag).unwrap();
-            file_tree.save(&db).unwrap();
-        } else {
-            error!("db already exists: {:?}", db);
-        }
+        // init & save new tree from given path
+        let node = Node::create_from_path_ext(&path, ignore, bitflag).unwrap();
+        node.save(&db).unwrap();
     }
 
     pub fn cmd_status(matches: &ArgMatches) {
@@ -73,22 +67,22 @@ impl<'a, 'b> Cli<'a, 'b> {
     pub fn cmd_add(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        if !db.exists() {
+            error!("db not exists: {:?}", db);
+            return;
+        }
+
         // get description
-        let desc = matches.value_of(KEY_RECOURSIVE);
+        let recoursive = matches.value_of(KEY_RECOURSIVE);
+
         // get file
         if let Some(file) = matches.value_of(KEY_FILE_NAME) {
             let file = PathBuf::from(file);
-            debug!("cmd_add({:?}, {:?}, {:?})", db, file, desc);
+            debug!("cmd_add({:?}, {:?}, {:?})", db, file, recoursive);
 
             // file exists?
             if !file.exists() {
                 error!("file not exists");
-                return;
-            }
-
-            // db exists?
-            if !db.exists() {
-                error!("db not exists");
                 return;
             }
 
@@ -101,6 +95,7 @@ impl<'a, 'b> Cli<'a, 'b> {
                 } else {
                     println!("path not found in db: {:?} (file or path not exists)", file);
                 }
+
             // save
             //node.save(&db).unwrap();
             } else {
@@ -116,8 +111,15 @@ impl<'a, 'b> Cli<'a, 'b> {
     pub fn cmd_edit(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        // db exists?
+        if !db.exists() {
+            error!("db not exists");
+            return;
+        }
+
         // get description
         let desc = matches.value_of(KEY_DESC);
+
         // get file
         if let Some(file) = matches.value_of(KEY_FILE_NAME) {
             let file = PathBuf::from(file);
@@ -126,12 +128,6 @@ impl<'a, 'b> Cli<'a, 'b> {
             // file exists?
             if !file.exists() {
                 error!("file not exists");
-                return;
-            }
-
-            // db exists?
-            if !db.exists() {
-                error!("db not exists");
                 return;
             }
 
@@ -162,16 +158,21 @@ impl<'a, 'b> Cli<'a, 'b> {
             error!("db not exists");
             return;
         }
+        unimplemented!();
     }
 
     pub fn cmd_update(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        if !db.exists() {
+            error!("db not exists");
+            return;
+        }
         // get working dir
         //let path = PathBuf::from(".");
         let path = PathBuf::from(matches.value_of(KEY_DIR).unwrap_or(DEFAULT_DIR_FILENAME));
         // get ignore list
-        let ignore_list: Option<Vec<String>> = if let Some(v) = matches.values_of(KEY_IGNORE) {
+        let ignore: Option<Vec<String>> = if let Some(v) = matches.values_of(KEY_IGNORE) {
             Some(v.map(|s| s.to_string()).collect())
         } else {
             None
@@ -179,13 +180,8 @@ impl<'a, 'b> Cli<'a, 'b> {
 
         debug!(
             "recieved subcommand: {} {:?} {:?} {:?}",
-            CMD_UPDATE, &path, &db, &ignore_list
+            CMD_UPDATE, &path, &db, &ignore
         );
-
-        if !db.exists() {
-            error!("db not exists");
-            return;
-        }
     }
 
     // open db
@@ -206,7 +202,6 @@ impl<'a, 'b> Cli<'a, 'b> {
     pub fn cmd_read(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
-        // db exists?
         if !db.exists() {
             error!("db not exists");
             return;
@@ -222,7 +217,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             if let Ok(node) = Node::load(&db) {
                 // get entry if exists
                 if let Some(entry) = node.get(&file) {
-                    let bitflag = Cli::get_bitflag(matches);
+                    let bitflag = Cli::get_bitflag(matches).unwrap_or(NODE_DEFAULT);
                     println!(
                         "{:?} {}",
                         Node::get_full_path(&entry.borrow()),
@@ -239,14 +234,18 @@ impl<'a, 'b> Cli<'a, 'b> {
         }
     }
 
-    pub fn cmd_delete(matches: &ArgMatches) {
+    pub fn cmd_rm(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        if !db.exists() {
+            error!("db not exists");
+            return;
+        }
 
         // get working dir
         if let Some(path) = matches.value_of(KEY_FILE_NAME) {
             let path = PathBuf::from(path);
-            debug!("recieved subcommand: {} {:?} {:?}", CMD_DELETE, &path, &db);
+            debug!("recieved subcommand: {} {:?} {:?}", CMD_RM, &path, &db);
 
             if let Ok(node) = Node::load(&db) {
                 // get entry if exists
@@ -271,6 +270,10 @@ impl<'a, 'b> Cli<'a, 'b> {
     pub fn cmd_ls(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        if !db.exists() {
+            error!("db not exists");
+            return;
+        }
         // get working dir
         let path = PathBuf::from(matches.value_of(KEY_PATH).unwrap_or("."));
         debug!("recieved subcommand: {} {:?} {:?}", CMD_LS, &path, &db);
@@ -286,6 +289,10 @@ impl<'a, 'b> Cli<'a, 'b> {
     pub fn cmd_print(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        if !db.exists() {
+            error!("db not exists");
+            return;
+        }
         // get template file path
         let template = PathBuf::from(
             matches
@@ -373,12 +380,17 @@ impl<'a, 'b> Cli<'a, 'b> {
     pub fn cmd_sort(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        if !db.exists() {
+            error!("db not exists");
+            return;
+        }
 
         // get working dir
         let _path = PathBuf::from(matches.value_of(KEY_PATH).unwrap_or("."));
 
         // get bitflags
-        let bitflag = Cli::get_bitflag(matches);
+        // FIXME: add sorting bitflags
+        let bitflag = Cli::get_bitflag(matches).unwrap_or(SORT_DSC);
 
         debug!("recieved command: {} {:b}", CMD_SORT, bitflag);
 
@@ -395,12 +407,16 @@ impl<'a, 'b> Cli<'a, 'b> {
     pub fn cmd_clear(matches: &ArgMatches) {
         // get db file path
         let db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
+        if !db.exists() {
+            error!("db not exists");
+            return;
+        }
 
         // get working dir
         let path = PathBuf::from(matches.value_of(KEY_PATH).unwrap_or("."));
 
         // get field
-        let bitflag = Cli::get_bitflag(matches);
+        let bitflag = Cli::get_bitflag(matches).unwrap_or(NODE_NONE);
 
         debug!("recieved command: {} {:?} {:b}", CMD_CLEAR, path, bitflag);
 
@@ -478,7 +494,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             (CMD_LS, Some(matches)) => Cli::cmd_ls(matches),
             (CMD_EDIT, Some(matches)) => Cli::cmd_edit(matches),
             (CMD_READ, Some(matches)) => Cli::cmd_read(matches),
-            (CMD_DELETE, Some(matches)) => Cli::cmd_delete(matches),
+            (CMD_RM, Some(matches)) => Cli::cmd_rm(matches),
             (CMD_STATUS, Some(matches)) => Cli::cmd_status(matches),
             (CMD_PRINT, Some(matches)) => Cli::cmd_print(matches),
             (CMD_SORT, Some(matches)) => Cli::cmd_sort(matches),

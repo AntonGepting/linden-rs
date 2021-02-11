@@ -53,16 +53,16 @@ pub const CMD_INIT_TEXT: &str = "initialize file tree";
 // XXX: mb CRUD?
 // edit [-b <DB>]
 pub const CMD_EDIT: &str = "edit";
-pub const CMD_EDIT_TEXT: &str = "edit file entry";
+pub const CMD_EDIT_TEXT: &str = "edit file node";
 // read [-b <DB>]
 pub const CMD_READ: &str = "read";
-pub const CMD_READ_TEXT: &str = "read file entry";
+pub const CMD_READ_TEXT: &str = "read file node";
 // print [-b <DB>]
 pub const CMD_PRINT: &str = "export";
 pub const CMD_PRINT_TEXT: &str = "print tree";
 // delete [-b <DB>] <FILE> [-sdamcst]
-pub const CMD_DELETE: &str = "delete";
-pub const CMD_DELETE_TEXT: &str = "delete file entry";
+pub const CMD_RM: &str = "rm";
+pub const CMD_RM_TEXT: &str = "remove file node";
 // print [-b <DB>]
 pub const CMD_PRINT_META: &str = "print";
 pub const CMD_PRINT_META_TEXT: &str = "print tree meta information";
@@ -259,7 +259,7 @@ pub const KEY_VERBOSE_HELP: &str = "Show additional information"; // TODO: text
 
 impl<'a, 'b> Cli<'a, 'b> {
     // XXX: mb return option is better?
-    pub fn get_bitflag(matches: &ArgMatches) -> usize {
+    pub fn get_bitflag(matches: &ArgMatches) -> Option<usize> {
         let mut bitflag = NODE_NONE;
 
         if matches.is_present(KEY_BITFLAG_NAME) {
@@ -290,6 +290,10 @@ impl<'a, 'b> Cli<'a, 'b> {
             bitflag |= NODE_CHILDREN;
         };
 
-        bitflag
+        if bitflag != NODE_NONE {
+            Some(bitflag)
+        } else {
+            None
+        }
     }
 }
