@@ -1,10 +1,12 @@
 # Linden
 
+## Description
+
 Linden is a program for building file trees for projects and managing meta
 information (descriptions, comments, tags) written using Rust language.
 
 
-# Motivation
+## Motivation
 
 Sometimes there is a need to add for project files some description for better
 understanding of structure and functionality of a project. Not all file systems
@@ -12,7 +14,7 @@ understanding of structure and functionality of a project. Not all file systems
 "transported" with the project it self. Purposes
 
 
-# Target
+## Target
 
 Aiming targets:
 - Storing meta information for project files:
@@ -23,7 +25,7 @@ Aiming targets:
     - YAML file (current choise)
 
 
-# Dependencies
+## Dependencies
 
 - `clap 2.33.3` - for CLI (Apache License Version 2.0 January 2004)
 - `log 0.4.11` - for logging (Apache License Version 2.0 January 2004)
@@ -35,6 +37,6 @@ Aiming targets:
 - `serde_yaml 0.8.13` - for YAML format support (Apache License Version 2.0 January 2004)
 
 
-# License
+## License
 
 Linden is licensed under the MIT license. Please read the license file in the repository for more information.
