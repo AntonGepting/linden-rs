@@ -37,4 +37,5 @@
     - common practice? current
     - allowing to interact user
 
-
+- Alias shortcut for some commands (`edit [PATH] -d [DESCRIPTION]` = `desc [DESCRIPTION] [PATH]`)
+    - need to make sure what is what file and desc
