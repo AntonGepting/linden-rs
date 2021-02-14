@@ -1,5 +1,7 @@
 # Linden
 
+[![Build Status](https://travis-ci.com/AntonGepting/linden-rs.svg?branch=main)](https://travis-ci.com/AntonGepting/linden-rs)
+
 ## Description
 
 Linden is a program for building file trees for projects and managing meta
