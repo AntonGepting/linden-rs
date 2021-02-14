@@ -39,14 +39,20 @@ impl<'a, 'b> Cli<'a, 'b> {
         // get bitflags, or use defaults
         let mut bitflag = Cli::get_bitflag(matches).unwrap_or(NODE_DEFAULT);
 
+        // if empty nodes
+        if matches.is_present(KEY_EMPTY) {
+            bitflag = NODE_NONE;
+        }
+
         // get ignore list
-        // XXX: check return
-        let files: Vec<String> = matches
-            .values_of(KEY_IGNORE)
-            .unwrap()
-            .map(|s| s.to_string())
-            .collect();
-        let ignore = Some(&files);
+        let v: Vec<String>;
+        let ignore = match matches.values_of(KEY_IGNORE) {
+            Some(files) => {
+                v = files.map(|s| s.to_string()).collect();
+                Some(&v)
+            }
+            None => None,
+        };
 
         debug!(
             "recieved subcommand: {} {:?} {:?} {:?} {:#x}",
@@ -58,6 +64,7 @@ impl<'a, 'b> Cli<'a, 'b> {
         node.save(&db).unwrap();
     }
 
+    // show tracked/untracked/changed/removed paths/files
     pub fn cmd_status(matches: &ArgMatches) {
         // get db file path
         let _db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
@@ -119,6 +126,17 @@ impl<'a, 'b> Cli<'a, 'b> {
 
         // get description
         let desc = matches.value_of(KEY_DESC);
+        // get tags
+        let v: Vec<String>;
+        let tags = match matches.values_of(KEY_TAGS) {
+            Some(t) => {
+                v = t.map(|s| s.to_string()).collect();
+                Some(v)
+            }
+            None => None,
+        };
+        // get comment
+        let comment = matches.value_of(KEY_COMMENT);
 
         // get file
         if let Some(file) = matches.value_of(KEY_FILE_NAME) {
@@ -137,6 +155,8 @@ impl<'a, 'b> Cli<'a, 'b> {
                 if let Some(entry) = node.get(&file) {
                     // modify description
                     entry.borrow_mut().desc = desc.map(String::from);
+                    entry.borrow_mut().tags = tags;
+                    entry.borrow_mut().comment = comment.map(String::from);
                 } else {
                     println!("path not found in db: {:?} (file or path not exists)", file);
                 }
@@ -301,7 +321,7 @@ impl<'a, 'b> Cli<'a, 'b> {
         );
 
         // export
-        debug!("cmd_edit({:?})", db);
+        debug!("cmd_print({:?})", db);
         if let Ok(node) = Node::load(&db) {
             let rendered = node
                 .process_template(0, 0, node.children_num(), "", &template)

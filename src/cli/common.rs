@@ -119,14 +119,21 @@ pub const CMD_ADD_TEXT: &str = "add path or file";
 pub const CMD_CLEAR: &str = "clear";
 pub const CMD_CLEAR_TEXT: &str = "clear fields";
 
+pub const KEY_EMPTY: &str = "EMPTY";
+pub const KEY_EMPTY_SHORT: &str = "-E";
+pub const KEY_EMPTY_LONG: &str = "--empty";
+pub const KEY_EMPTY_HELP: &str = "empty";
+
 pub const KEY_BITFLAG_NAME: &str = "NAME";
 pub const KEY_BITFLAG_NAME_SHORT: &str = "-N";
 pub const KEY_BITFLAG_NAME_LONG: &str = "--name";
 pub const KEY_BITFLAG_NAME_HELP: &str = "name";
+pub const CMD_ALIAS_BITFLAG_NAME: &str = "name";
 pub const KEY_BITFLAG_DESC: &str = "DESC";
 pub const KEY_BITFLAG_DESC_SHORT: &str = "-D";
 pub const KEY_BITFLAG_DESC_LONG: &str = "--description";
 pub const KEY_BITFLAG_DESC_HELP: &str = "description";
+pub const CMD_ALIAS_BITFLAG_DESC: &str = "desc";
 //pub const KEY_BITFLAG_SHA256: &str = "SHA256";
 //pub const KEY_BITFLAG_SHA256_SHORT: &str = "-h";
 //pub const KEY_BITFLAG_STATUS: &str = "STATUS";
@@ -196,6 +203,18 @@ pub const KEY_DESC_LONG: &str = "--description";
 pub const KEY_DESC_HELP: &str = "Description";
 pub const KEY_DESCRIPTION: &str = "DESCRIPTION";
 
+pub const KEY_TAGS: &str = "tags";
+pub const KEY_TAGS_SHORT: &str = "-G";
+pub const KEY_TAGS_LONG: &str = "--tags";
+pub const KEY_TAGS_HELP: &str = "Tags";
+//pub const KEY_TAGS: &str = "TAGS";
+
+pub const KEY_COMMENT: &str = "comment";
+pub const KEY_COMMENT_SHORT: &str = "-c";
+pub const KEY_COMMENT_LONG: &str = "--comment";
+pub const KEY_COMMENT_HELP: &str = "Comment";
+pub const KEY_COMMENT_DESC: &str = "COMMENT";
+
 // CLI keys, parameters, etc
 //const KEY_PROJECT: &'static str = "project";
 //const KEY_PROJECT_SHORT: &'static str = "-p";
@@ -224,7 +243,7 @@ pub const KEY_LOG_HELP: &str = "Specify log file";
 pub const KEY_LOG_FILE: &str = "LOG_FILE";
 pub const DEFAULT_LOG_FILENAME: &str = "linden.log";
 
-pub const KEY_IGNORE: &str = "ignore";
+pub const KEY_IGNORE: &str = "IGNORE_FILE";
 pub const KEY_IGNORE_SHORT: &str = "-i";
 pub const KEY_IGNORE_LONG: &str = "--ignore";
 pub const KEY_IGNORE_HELP: &str = "ignore list files";
@@ -240,10 +259,10 @@ pub const KEY_CFG_HELP: &str = "Specify cfg file";
 pub const KEY_CFG_FILE: &str = "CFG_FILE";
 pub const DEFAULT_CFG_FILENAME: &str = "linden.yml";
 
-pub const KEY_DIR: &str = "directory";
+pub const KEY_DIR: &str = "ROOT_DIRECTORY";
 pub const KEY_DIR_SHORT: &str = "-d";
 pub const KEY_DIR_LONG: &str = "--directory";
-pub const KEY_DIR_HELP: &str = "directory to create db in";
+pub const KEY_DIR_HELP: &str = "root directory";
 pub const KEY_DIR_FILENAME: &str = "DIRECTORY";
 pub const DEFAULT_DIR_FILENAME: &str = ".";
 

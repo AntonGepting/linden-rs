@@ -283,13 +283,25 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .help(KEY_FORCE_HELP),
                     )
                     .arg(
+                        Arg::with_name(KEY_EMPTY)
+                            .short(KEY_EMPTY_SHORT)
+                            .long(KEY_EMPTY_LONG)
+                            .help(KEY_EMPTY_HELP),
+                    )
+                    //.arg(
+                    //Arg::with_name(KEY_DIR)
+                    //.short(KEY_DIR_SHORT)
+                    //.long(KEY_DIR_LONG)
+                    //.help(KEY_DIR_HELP)
+                    //.value_name(KEY_DIR_FILENAME)
+                    //.default_value(DEFAULT_DIR_FILENAME)
+                    //.takes_value(true),
+                    //),
+                    .arg(
                         Arg::with_name(KEY_DIR)
-                            .short(KEY_DIR_SHORT)
-                            .long(KEY_DIR_LONG)
                             .help(KEY_DIR_HELP)
-                            .value_name(KEY_DIR_FILENAME)
                             .default_value(DEFAULT_DIR_FILENAME)
-                            .takes_value(true),
+                            .index(1),
                     ),
             )
             // add
@@ -337,6 +349,23 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .long(KEY_DESC_LONG)
                             .value_name(KEY_DESCRIPTION)
                             .help(KEY_DESC_HELP)
+                            .takes_value(true),
+                    )
+                    .arg(
+                        Arg::with_name(KEY_TAGS)
+                            .short(KEY_TAGS_SHORT)
+                            .long(KEY_TAGS_LONG)
+                            //.value_name(KEY_TAGS)
+                            .help(KEY_TAGS_HELP)
+                            .takes_value(true)
+                            .multiple(true),
+                    )
+                    .arg(
+                        Arg::with_name(KEY_COMMENT)
+                            .short(KEY_COMMENT_SHORT)
+                            .long(KEY_COMMENT_LONG)
+                            .value_name(KEY_COMMENT_DESC)
+                            .help(KEY_COMMENT_HELP)
                             .takes_value(true),
                     )
                     .arg(

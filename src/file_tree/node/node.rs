@@ -710,7 +710,7 @@ impl Node {
 
         // render entry
         //let entry_str = tera.render(&template.to_str().unwrap(), &context).unwrap();
-        let entry_str = self.to_string_ext(NODE_NAME | NODE_DESC);
+        let entry_str = self.to_string_ext(NODE_NAME | NODE_DESC | NODE_TAGS);
         let (tab, link) = Node::get_tabs(level, idx, size, ["", "│  ", "   "], ["", "├─ ", "└─ "]);
         let mut render = format!("{}{}\n", link, entry_str);
         let tabs = format!("{}{}", tabs, tab);
@@ -807,9 +807,12 @@ impl Node {
                 s = format!("{}{} ", s, file_type);
             }
         }
-        //if (bitflag & COMPARE_TAGS) > 0 {
-        //s = format!("{} {}", s, body.tags.unwrap_or(vec!["".to_string()]));
-        //}
+        // TODO: print
+        if (bitflag & NODE_TAGS) > 0 {
+            if let Some(tags) = &self.borrow().tags {
+                s = format!("{} {:?}", s, tags);
+            }
+        }
         s
     }
 

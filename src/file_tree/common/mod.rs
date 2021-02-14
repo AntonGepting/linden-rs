@@ -4,23 +4,39 @@ pub mod file_type;
 
 // XXX: alphabetical?
 pub const NODE_NAME: usize = 1;
-pub const NODE_DESC: usize = 1 << 1;
-pub const NODE_SHA256: usize = 1 << 2;
-pub const NODE_STATUS: usize = 1 << 3;
-pub const NODE_MODIFIED: usize = 1 << 4;
-pub const NODE_ACCESSED: usize = 1 << 5;
-pub const NODE_CREATED: usize = 1 << 6;
-pub const NODE_SIZE: usize = 1 << 7;
-pub const NODE_FILE_TYPE: usize = 1 << 8;
-pub const NODE_CHILDREN: usize = 1 << 9;
-pub const NODE_COMPARE: usize = 1 << 10;
-pub const NODE_TAGS: usize = 1 << 11;
-pub const NODE_FULL_PATH: usize = 1 << 12;
+pub const NODE_SHA256: usize = 1 << 1;
+pub const NODE_STATUS: usize = 1 << 2;
+pub const NODE_MODIFIED: usize = 1 << 3;
+pub const NODE_ACCESSED: usize = 1 << 4;
+pub const NODE_CREATED: usize = 1 << 5;
+pub const NODE_SIZE: usize = 1 << 6;
+pub const NODE_FILE_TYPE: usize = 1 << 7;
+pub const NODE_CHILDREN: usize = 1 << 8;
+//pub const NODE_COMPARE: usize = 1 << 9;
+pub const NODE_FULL_PATH: usize = 1 << 10;
+
+pub const NODE_DESC: usize = 1 << 11;
+pub const NODE_TAGS: usize = 1 << 12;
 pub const NODE_COMMENT: usize = 1 << 13;
 pub const NODE_HIDDEN: usize = 1 << 14;
 
 pub const SORT_ASC: usize = 1 << 23;
 pub const SORT_DSC: usize = 1 << 24;
+
+/// automatic fields (auto generated or specified by os or file functions)
+pub const NODE_AUTO: usize = NODE_NAME
+    | NODE_SHA256
+    | NODE_STATUS
+    | NODE_MODIFIED
+    | NODE_ACCESSED
+    | NODE_CREATED
+    | NODE_SIZE
+    | NODE_FILE_TYPE
+    | NODE_CHILDREN
+    //| NODE_COMPARE
+    | NODE_FULL_PATH;
+/// manual fields (given by user)
+pub const NODE_MANUAL: usize = NODE_DESC | NODE_TAGS | NODE_COMMENT | NODE_HIDDEN;
 
 pub const NODE_NONE: usize = 0;
 pub const NODE_DEFAULT: usize = NODE_NAME | NODE_DESC | NODE_SIZE | NODE_FILE_TYPE | NODE_COMMENT;
@@ -34,7 +50,7 @@ pub const NODE_ALL: usize = NODE_NAME
     | NODE_SIZE
     | NODE_FILE_TYPE
     | NODE_CHILDREN
-    | NODE_COMPARE
+    //| NODE_COMPARE
     | NODE_TAGS
     | NODE_FULL_PATH
     | NODE_COMMENT;
@@ -48,7 +64,7 @@ pub const NODE_OPTIONALS: usize = NODE_DESC
     | NODE_CREATED
     | NODE_SIZE
     | NODE_FILE_TYPE
-    | NODE_COMPARE
+    //| NODE_COMPARE
     | NODE_TAGS;
 
 pub const NODE_DYNAMICS: usize =
