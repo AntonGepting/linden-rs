@@ -9,7 +9,7 @@ fn path() {
 
 #[test]
 fn new() {
-    use crate::node::node::Node;
+    use crate::file_tree::Node;
     use std::ffi::OsString;
 
     let node = Node::new(OsString::from("."), None);
@@ -18,7 +18,7 @@ fn new() {
 
 #[test]
 fn add_child() {
-    use crate::node::node::Node;
+    use crate::file_tree::Node;
     use std::ffi::OsString;
     use std::rc::Rc;
 
@@ -32,12 +32,12 @@ fn add_child() {
 
 #[test]
 fn add_path_ext() {
-    use crate::{Node, COMPARE_DEFAULT};
+    use crate::file_tree::{Node, NODE_DEFAULT};
     use std::path::Path;
 
     let mut node = Node::default();
     let ignore = vec![".git".to_string(), "target".to_string()];
-    node.add_path_ext(None, &Path::new("."), Some(&ignore), COMPARE_DEFAULT)
+    node.add_path_ext(None, &Path::new("."), Some(&ignore), NODE_DEFAULT)
         .unwrap();
 
     dbg!(node);
@@ -46,7 +46,7 @@ fn add_path_ext() {
 
 #[test]
 fn from_tree_entry() {
-    use crate::{Node, TreeEntry, TreeEntryBody};
+    use crate::file_tree::{Node, TreeEntry, TreeEntryBody};
 
     let child11 = TreeEntry::new("child11", TreeEntryBody::default());
     let child12 = TreeEntry::new("child12", TreeEntryBody::default());
@@ -67,6 +67,11 @@ fn from_tree_entry() {
     let node = Node::from_tree_entry(None, &root);
 
     dbg!(node);
+}
+
+#[test]
+fn get() {
+    use crate::file_tree::Node;
 }
 
 //#[test]
