@@ -150,6 +150,18 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .takes_value(true),
                     )
                     .arg(
+                        Arg::with_name(KEY_DIR)
+                            .help(KEY_DIR_HELP)
+                            .default_value(DEFAULT_DIR_FILENAME)
+                            .index(1),
+                    )
+                    .arg(
+                        Arg::with_name(KEY_RECOURSIVE)
+                            .short(KEY_RECOURSIVE_SHORT)
+                            .long(KEY_RECOURSIVE_LONG)
+                            .help(KEY_RECOURSIVE_HELP),
+                    )
+                    .arg(
                         Arg::with_name(KEY_BITFLAG_NAME)
                             .short(KEY_BITFLAG_NAME_SHORT)
                             .long(KEY_BITFLAG_NAME_LONG)
@@ -389,7 +401,7 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .takes_value(true),
                     ),
             )
-            // delete
+            // rm
             .subcommand(
                 SubCommand::with_name(CMD_RM)
                     .about(CMD_RM_TEXT)

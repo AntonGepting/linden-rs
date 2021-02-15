@@ -438,13 +438,16 @@ impl<'a, 'b> Cli<'a, 'b> {
         // get field
         let bitflag = Cli::get_bitflag(matches).unwrap_or(NODE_NONE);
 
+        let recoursive = matches.is_present(KEY_RECOURSIVE);
+
         debug!("recieved command: {} {:?} {:b}", CMD_CLEAR, path, bitflag);
 
         // clear and write
-        // XXX: do not write dry run option
-        if let Ok(node) = Node::load(&db) {
-            node.clear_ext(bitflag);
-            node.save(&db).unwrap();
+        if let Ok(tree) = Node::load(&db) {
+            if let Some(node) = tree.get(&path) {
+                node.clear_ext(bitflag, recoursive);
+                tree.save(&db).unwrap();
+            }
         }
     }
 

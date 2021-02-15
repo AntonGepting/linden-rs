@@ -181,9 +181,9 @@ pub const KEY_FILE_NAME: &str = "FILE";
 pub const KEY_FILE_NAME_HELP: &str = "file name";
 
 pub const KEY_RECOURSIVE: &str = "recoursive";
-pub const KEY_RECOURSIVE_SHORT: &str = "-r";
+pub const KEY_RECOURSIVE_SHORT: &str = "-R";
 pub const KEY_RECOURSIVE_LONG: &str = "--recoursive";
-pub const KEY_RECOURSIVE_HELP: &str = "recoursive operation";
+pub const KEY_RECOURSIVE_HELP: &str = "Recoursive operation";
 
 pub const KEY_FORCE: &str = "FORCE";
 pub const KEY_FORCE_SHORT: &str = "-f";
