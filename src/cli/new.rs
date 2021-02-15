@@ -156,10 +156,10 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .index(1),
                     )
                     .arg(
-                        Arg::with_name(KEY_RECOURSIVE)
-                            .short(KEY_RECOURSIVE_SHORT)
-                            .long(KEY_RECOURSIVE_LONG)
-                            .help(KEY_RECOURSIVE_HELP),
+                        Arg::with_name(KEY_RECURSIVE)
+                            .short(KEY_RECURSIVE_SHORT)
+                            .long(KEY_RECURSIVE_LONG)
+                            .help(KEY_RECURSIVE_HELP),
                     )
                     .arg(
                         Arg::with_name(KEY_BITFLAG_NAME)
@@ -330,10 +330,10 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .takes_value(true),
                     )
                     .arg(
-                        Arg::with_name(KEY_RECOURSIVE)
-                            .short(KEY_RECOURSIVE_SHORT)
-                            .long(KEY_RECOURSIVE_LONG)
-                            .help(KEY_RECOURSIVE_HELP),
+                        Arg::with_name(KEY_RECURSIVE)
+                            .short(KEY_RECURSIVE_SHORT)
+                            .long(KEY_RECURSIVE_LONG)
+                            .help(KEY_RECURSIVE_HELP),
                     )
                     .arg(
                         Arg::with_name(KEY_FILE_NAME)

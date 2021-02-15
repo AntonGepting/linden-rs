@@ -5,7 +5,7 @@ use std::io;
 pub enum Error {
     IO(io::Error),
     SerdeYaml(serde_yaml::Error),
-    //Recourse,
+    //Recurse,
     //OsString(std::ffi::Error),
     Custom(String),
 }
@@ -15,7 +15,7 @@ impl fmt::Display for Error {
         match *self {
             Self::IO(ref err) => err.fmt(f),
             Self::SerdeYaml(ref err) => err.fmt(f),
-            //Self::Recourse => write!("recourse"),
+            //Self::Recurse => write!("recurse"),
             //Self::OsString(ref err) => err.fmt(f),
             Self::Custom(ref err) => err.fmt(f),
         }

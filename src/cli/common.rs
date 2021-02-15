@@ -39,7 +39,7 @@ pub const CMD_LS_TEXT: &str = "list tracked files";
 ///  - `-C, --created`
 ///  - `-M, --modified`
 ///  - `-A, --accessed`
-//  XXX: mb -R, --recourse
+//  XXX: mb -R, --recurse
 ///  - `-H, --children`
 ///  - `-G, --tags`
 ///
@@ -95,7 +95,7 @@ pub const CMD_UPDATE: &str = "update";
 ///  -b <DB>, --database <DB>    DB file path
 ///  PATH               entry file path
 ///
-///  -r, --recourse     add children
+///  -r, --recurse     add children
 pub const CMD_ADD: &str = "add";
 pub const CMD_ADD_TEXT: &str = "add path or file";
 
@@ -112,7 +112,7 @@ pub const CMD_ADD_TEXT: &str = "add path or file";
 ///  -C, --created
 ///  -M, --modified
 ///  -A, --accessed
-//  XXX: mb -R, --recourse
+//  XXX: mb -R, --recurse
 ///  -H, --children
 ///  -G, --tags
 ///
@@ -180,10 +180,10 @@ pub const KEY_PATH_HELP: &str = "path of file";
 pub const KEY_FILE_NAME: &str = "FILE";
 pub const KEY_FILE_NAME_HELP: &str = "file name";
 
-pub const KEY_RECOURSIVE: &str = "recoursive";
-pub const KEY_RECOURSIVE_SHORT: &str = "-R";
-pub const KEY_RECOURSIVE_LONG: &str = "--recoursive";
-pub const KEY_RECOURSIVE_HELP: &str = "Recoursive operation";
+pub const KEY_RECURSIVE: &str = "recursive";
+pub const KEY_RECURSIVE_SHORT: &str = "-R";
+pub const KEY_RECURSIVE_LONG: &str = "--recursive";
+pub const KEY_RECURSIVE_HELP: &str = "Recursive operation";
 
 pub const KEY_FORCE: &str = "FORCE";
 pub const KEY_FORCE_SHORT: &str = "-f";

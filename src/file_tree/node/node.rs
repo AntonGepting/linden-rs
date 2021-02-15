@@ -175,8 +175,8 @@ impl Node {
         s
     }
 
-    // clear given fields, recoursive if needed
-    pub fn clear_ext(&self, bitflag: usize, recoursive: bool) {
+    // clear given fields, recursive if needed
+    pub fn clear_ext(&self, bitflag: usize, recursive: bool) {
         // NOTE: can't clear name, only remove entry
         if (bitflag & NODE_DESC) > 0 {
             self.borrow_mut().desc = None;
@@ -205,15 +205,15 @@ impl Node {
         if (bitflag & NODE_TAGS) > 0 {
             self.borrow_mut().tags = None;
         }
-        // XXX: check, drop needed? recoursive anyway
+        // XXX: check, drop needed? recursive anyway
         if (bitflag & NODE_CHILDREN) > 0 {
             self.borrow_mut().children = None;
         }
         // for children too
-        if recoursive {
+        if recursive {
             if let Some(children) = &mut self.borrow_mut().children {
                 for child in children {
-                    child.clear_ext(bitflag, recoursive);
+                    child.clear_ext(bitflag, recursive);
                 }
             }
         }

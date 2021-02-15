@@ -80,12 +80,12 @@ impl<'a, 'b> Cli<'a, 'b> {
         }
 
         // get description
-        let recoursive = matches.value_of(KEY_RECOURSIVE);
+        let recursive = matches.value_of(KEY_RECURSIVE);
 
         // get file
         if let Some(file) = matches.value_of(KEY_FILE_NAME) {
             let file = PathBuf::from(file);
-            debug!("cmd_add({:?}, {:?}, {:?})", db, file, recoursive);
+            debug!("cmd_add({:?}, {:?}, {:?})", db, file, recursive);
 
             // file exists?
             if !file.exists() {
@@ -438,14 +438,14 @@ impl<'a, 'b> Cli<'a, 'b> {
         // get field
         let bitflag = Cli::get_bitflag(matches).unwrap_or(NODE_NONE);
 
-        let recoursive = matches.is_present(KEY_RECOURSIVE);
+        let recursive = matches.is_present(KEY_RECURSIVE);
 
         debug!("recieved command: {} {:?} {:b}", CMD_CLEAR, path, bitflag);
 
         // clear and write
         if let Ok(tree) = Node::load(&db) {
             if let Some(node) = tree.get(&path) {
-                node.clear_ext(bitflag, recoursive);
+                node.clear_ext(bitflag, recursive);
                 tree.save(&db).unwrap();
             }
         }

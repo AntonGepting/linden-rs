@@ -72,7 +72,7 @@ CLI:
     - `-s, --size` - size
     - `-t, --type` - type
 
-    - `-R, --recoursive` - recoursive run command
+    - `-R, --recursive` - recursive run command
     - `-f, --force` - force
 
 
@@ -97,7 +97,7 @@ CLI:
     - `-C, --created`
     - `-M, --modified`
     - `-A, --accessed`
-    - `-R, --recourse` = `-H, --children`
+    - `-R, --recurse` = `-H, --children`
 
     - `-D, --description`
     - `-H, --hidden`
@@ -196,10 +196,10 @@ what if?
     - [x] plain text, human r/w
     - [ ] sql db, as an option?
 
-- Tree, template parsing recoursing calls how to solve?
-    - [ ] manage this not in template not allows recoursion, using inline in code instead
+- Tree, template parsing recursing calls how to solve?
+    - [ ] manage this not in template not allows recursion, using inline in code instead
 
-- Tree, too slow and recourse in struction, m.b. that's why?:
+- Tree, too slow and recurse in struction, m.b. that's why?:
     - [x] Using Rc, RefCell
     - [ ] sha256 enabled by default
 
