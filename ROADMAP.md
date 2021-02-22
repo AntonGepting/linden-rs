@@ -54,6 +54,9 @@ CLI:
     - `duplicates` - ?
     - `fill [-b <DB>]` - fill fields with given value
 
+- mid level
+    - move = read, create, delete
+    - rename = update (create, delete)
 
 - low level commands (single node access, local changes), CRUD?:
     - create
@@ -75,6 +78,7 @@ CLI:
     - `-R, --recursive` - recursive run command
     - `-f, --force` - force
 
+    - `-E, --regex` - use regex instead of exact matching
 
 - `-h, --help` - help
 - `-q, --quiet` - be silent
