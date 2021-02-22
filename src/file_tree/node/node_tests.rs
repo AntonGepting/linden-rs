@@ -5,6 +5,12 @@ fn path() {
     let p = Path::new(".");
     let cs = p.components();
     dbg!(cs);
+    let p = Path::new("/**/*.rs");
+    let cs = p.components();
+    dbg!(cs);
+    let p = Path::new("/**/?abc.rs");
+    let cs = p.components();
+    dbg!(cs);
 }
 
 #[test]
@@ -13,21 +19,64 @@ fn new() {
     use std::ffi::OsString;
 
     let node = Node::new(OsString::from("."), None);
-    dbg!(node);
+    assert_eq!(node.borrow().file, ".");
+
+    let node = Node::new(".", None);
+    assert_eq!(node.borrow().file, ".");
+
+    let node = Node::new(".".to_string(), None);
+    assert_eq!(node.borrow().file, ".");
 }
 
 #[test]
 fn add_child() {
     use crate::file_tree::Node;
     use std::ffi::OsString;
-    use std::rc::Rc;
 
-    let x = Node::new(OsString::from("."), None);
-    let y = Node::new(OsString::from("a"), Some(Rc::downgrade(&x)));
-    let x = Node::to_node(x);
-    x.add_child(y);
+    let root = Node::to_node(Node::new(".", None));
+    let child1 = Node::new("a", None);
+    let child2 = Node::new("b", None);
+    let child3 = Node::new("c", None);
 
-    dbg!(x);
+    root.add_child(child1);
+
+    //dbg!(root);
+}
+
+#[test]
+fn remove_child() {
+    use crate::file_tree::Node;
+    use std::ffi::OsString;
+
+    let root = Node::to_node(Node::new(".", None));
+    let child1 = Node::new("a", None);
+    let child2 = Node::new("b", None);
+    let child3 = Node::new("c", None);
+
+    root.add_child(child1);
+    root.add_child(child2);
+    root.add_child(child3);
+
+    root.remove_child("c");
+    dbg!(root);
+}
+
+#[test]
+fn remove() {
+    use crate::file_tree::Node;
+    use std::ffi::OsString;
+
+    let root = Node::to_node(Node::new(".", None));
+    let child1 = Node::new("a", None);
+    let child2 = Node::new("b", None);
+    let child3 = Node::new("c", None);
+
+    root.add_child(child1);
+    root.add_child(child2);
+    root.add_child(child3);
+
+    root.remove("./c");
+    dbg!(root);
 }
 
 #[test]
@@ -37,11 +86,22 @@ fn add_path_ext() {
 
     let mut node = Node::default();
     let ignore = vec![".git".to_string(), "target".to_string()];
+
+    node.add_path_ext(None, Path::new("."), Some(&ignore), NODE_DEFAULT)
+        .unwrap();
+    assert_eq!(node.borrow().file, ".");
+
     node.add_path_ext(None, &Path::new("."), Some(&ignore), NODE_DEFAULT)
         .unwrap();
+    assert_eq!(node.borrow().file, ".");
 
-    dbg!(node);
-    //node.print_in_line();
+    node.add_path_ext(None, ".".to_string(), Some(&ignore), NODE_DEFAULT)
+        .unwrap();
+    assert_eq!(node.borrow().file, ".");
+
+    node.add_path_ext(None, ".", Some(&ignore), NODE_DEFAULT)
+        .unwrap();
+    assert_eq!(node.borrow().file, ".");
 }
 
 #[test]
@@ -72,6 +132,18 @@ fn from_tree_entry() {
 #[test]
 fn get() {
     use crate::file_tree::Node;
+    use std::path::Path;
+
+    let root = Node::to_node(Node::new(".", None));
+    let child1 = Node::new("a", None);
+    let child2 = Node::new("b", None);
+    let child3 = Node::new("c", None);
+
+    root.add_child(child1);
+    root.add_child(child2);
+    root.add_child(child3);
+
+    dbg!(root.get_child("a"));
 }
 
 //#[test]

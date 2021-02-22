@@ -17,13 +17,13 @@ use std::path::{Component, Path, PathBuf};
 use std::rc::{Rc, Weak};
 
 /// default/child pointer
-type NodeRc = Rc<RefCell<NodeData>>;
+pub type NodeRc = Rc<RefCell<NodeData>>;
 /// parent pointer
-type NodeWeak = Weak<RefCell<NodeData>>;
+pub type NodeWeak = Weak<RefCell<NodeData>>;
 
 /// newtype wrapper
 #[derive(Debug, Clone, Default)]
-pub struct Node(NodeRc);
+pub struct Node(pub NodeRc);
 
 /// main structure holding data
 #[derive(Debug, Clone, Default)]
@@ -68,26 +68,19 @@ pub struct NodeData {
 impl Node {
     // add child, create children vector if not exist (for first child)
     pub fn add_child(&self, child: NodeRc) {
-        let node = Node(child);
+        // save parent
+        child.borrow_mut().parent = Some(Rc::downgrade(&self.0));
+        // create vec if not exists, and append
+        let child = Node(child);
         if self.has_children() {
-            if let Some(ref mut children) = self.borrow_mut().children {
-                children.push(node)
-            }
+            self.borrow_mut()
+                .children
+                .as_mut()
+                .and_then(|children| Some(children.push(child)));
         } else {
-            self.borrow_mut().children = Some(vec![node])
+            self.borrow_mut().children = Some(vec![child])
         }
     }
-
-    //pub fn borrow(&self) -> Ref<Node> {
-    //self.0.borrow()
-    //}
-
-    //pub fn len(&self) -> usize {
-    //match &self.0.borrow().children {
-    //Some(children) => children.len(),
-    //None => 0,
-    //}
-    //}
 
     // add files and directories to self (TreeEntry)
     // XXX: additional options as an argument
@@ -325,32 +318,34 @@ impl Node {
     // add files and directories to self (TreeEntry)
     // XXX: additional options as an argument
     // NOTE: overwrites pure file name of the root directory with full path
-    pub fn create_from_path(dir: &Path, ignore: Option<&Vec<String>>) -> Result<Node, Error> {
-        Node::create_from_path_ext(dir, ignore, NODE_DEFAULT)
+    pub fn create_from_path<P: AsRef<Path>>(
+        dir: P,
+        ignore: Option<&Vec<String>>,
+    ) -> Result<Node, Error> {
+        Node::create_from_path_ext(dir.as_ref(), ignore, NODE_DEFAULT)
     }
 
     // add files and directories to self (TreeEntry)
     // XXX: additional options as an argument
     // NOTE: overwrites pure file name of the root directory with full path
-    pub fn create_from_path_ext(
-        dir: &Path,
+    pub fn create_from_path_ext<P: AsRef<Path>>(
+        dir: P,
         ignore: Option<&Vec<String>>,
         bitflag: usize,
     ) -> Result<Node, Error> {
-        // if path is convertable into str
-        let file = dir.as_os_str();
+        let file = dir.as_ref().as_os_str();
         let mut node = Node(Node::new(file.to_owned(), None));
 
         node.add_path_ext(None, dir, ignore, bitflag)?;
         Ok(node)
     }
 
-    pub fn desc(&self, desc: Option<String>) {
-        self.borrow_mut().desc = desc;
+    pub fn desc<S: Into<String>>(&self, desc: Option<S>) {
+        self.borrow_mut().desc = desc.map(|s| s.into());
     }
 
-    pub fn comment(&self, comment: Option<String>) {
-        self.borrow_mut().comment = comment;
+    pub fn comment<S: Into<String>>(&self, comment: Option<S>) {
+        self.borrow_mut().comment = comment.map(|s| s.into());
     }
 
     pub fn hidden(&self, hidden: Option<bool>) {
@@ -532,6 +527,7 @@ impl Node {
 
         // iterate over path elements
         for component in path.as_ref().components() {
+            //println!("{:?} {:?}", Component::Normal(name), &component);
             // skip root . (accept ./foo/bar/file.ext foo/bar/file.ext)
             // XXX: mb just remove root . before calling get from path?
             if component == Component::CurDir {
@@ -552,11 +548,11 @@ impl Node {
 
     // get child by name if exists
     // XXX: what with entry body? only children affected
-    pub fn get_child(&self, file: &OsStr) -> Option<Node> {
+    pub fn get_child<S: AsRef<OsStr>>(&self, file: S) -> Option<Node> {
         // OPT: self.children.and_then(|children| children.iter)
         if let Some(children) = &self.borrow().children {
             for child in children {
-                if child.borrow().file == *file {
+                if child.borrow().file == file.as_ref() {
                     return Some(child.clone());
                 }
             }
@@ -564,10 +560,27 @@ impl Node {
         None
     }
 
+    pub fn get_child_idx<S: AsRef<OsStr>>(&self, file: S) -> Option<usize> {
+        self.borrow().children.as_ref().and_then(|children| {
+            children
+                .iter()
+                .position(|child| child.borrow().file == file.as_ref())
+        })
+    }
+
+    // remove child by name
+    pub fn remove_child<S: AsRef<OsStr>>(&self, file: S) {
+        self.borrow_mut().children.as_mut().and_then(|children| {
+            Some(children.retain(|child| child.borrow().file != file.as_ref()))
+        });
+    }
+
+    // borrow() wrapper
     pub fn borrow(&self) -> Ref<NodeData> {
         self.0.borrow()
     }
 
+    // borrow_mut() wrapper
     pub fn borrow_mut(&self) -> RefMut<NodeData> {
         self.0.borrow_mut()
     }
@@ -650,9 +663,9 @@ impl Node {
         })
     }
 
-    pub fn new(file: OsString, parent: Option<NodeWeak>) -> NodeRc {
+    pub fn new<S: Into<OsString>>(file: S, parent: Option<NodeWeak>) -> NodeRc {
         Rc::new(RefCell::new(NodeData {
-            file,
+            file: file.into(),
             parent,
             ..Default::default()
         }))
@@ -740,20 +753,16 @@ impl Node {
 
     // TODO: write it
     // XXX: Option
-    pub fn remove(&self, _path: &Path) -> Option<()> {
-        // XXX: examples check is it properly
-        //path.file_name().and_then(|last_element| {
-        //last_element.to_str().and_then(|_name| {
-        //self.get_parent(&path).as_mut().and_then(|parent| {
-        //let mut parent = parent.borrow_mut();
-        //if let Some(body) = parent.first_body_mut() {
-        //body.children = None;
-        //}
-        Some(())
-        //Some(parent.remove_child(name))
-        //})
-        //})
-        //})
+    // XXX: examples check is it properly
+    // XXX: destroy vec if last aswell
+    pub fn remove<P: AsRef<Path>>(&self, path: P) -> Option<()> {
+        self.get(path).and_then(|node| {
+            node.borrow().parent.as_ref().and_then(|parent_weak| {
+                parent_weak
+                    .upgrade()
+                    .and_then(|parent| Some(Node(parent).remove_child(&node.borrow().file)))
+            })
+        })
     }
 
     pub fn set_parent(&self, parent: NodeWeak) {
