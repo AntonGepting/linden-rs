@@ -39,17 +39,18 @@ CLI:
     - `init` - initialize db
     - `clean` - clean db, only existing files stay?
 
-    - `rm` - remove node
-    - `add` - add node (`--d description`)
+    - `rm` - remove file or path
+    - `add` - add file or path (`--d description`)
 
-    - `clear` - clear node fields
+    - `clear` - clear file or path fields
     - `update` - update from existing files
-    - `status`
+    - `status` - current status
 
     - `make` - ?
     - `search`
     - `diff`
     - `find`
+    - `exists`
     - `check` - ?
     - `duplicates` - ?
     - `fill [-b <DB>]` - fill fields with given value
