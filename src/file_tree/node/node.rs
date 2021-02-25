@@ -3,8 +3,9 @@
 
 use crate::file_tree::{Error, FileTree, FileType, TreeEntry};
 use crate::file_tree::{
-    NODE_ACCESSED, NODE_ALL, NODE_CHILDREN, NODE_CREATED, NODE_DEFAULT, NODE_DESC, NODE_FILE_TYPE,
-    NODE_MODIFIED, NODE_NAME, NODE_NONE, NODE_SHA256, NODE_SIZE, NODE_STATUS, NODE_TAGS, SORT_ASC,
+    NODE_ACCESSED, NODE_ALL, NODE_CHILDREN, NODE_COMMENT, NODE_CREATED, NODE_DEFAULT, NODE_DESC,
+    NODE_FILE_TYPE, NODE_MODIFIED, NODE_NAME, NODE_NONE, NODE_SHA256, NODE_SIZE, NODE_STATUS,
+    NODE_TAGS, SORT_ASC,
 };
 use chrono::offset::Utc;
 use chrono::DateTime;
@@ -469,6 +470,10 @@ impl Node {
         node.file = dir_entry.file_name();
         //node.path = dir_entry.path();
 
+        if (bitflag & NODE_DESC) > 0 {
+            node.desc = Some(String::from(""));
+        }
+
         // metadata exists? save .created .acessed .modified .len
         if let Ok(metadata) = dir_entry.metadata() {
             if (bitflag & NODE_CREATED) > 0 {
@@ -502,7 +507,14 @@ impl Node {
                 }
             }
 
+            if (bitflag & NODE_TAGS) > 0 {
+                node.tags = Some(vec![String::from("")]);
+            }
             //permissions
+        }
+
+        if (bitflag & NODE_COMMENT) > 0 {
+            node.desc = Some(String::from(""));
         }
 
         // calc SHA256 hash for file

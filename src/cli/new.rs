@@ -3,7 +3,92 @@ use super::common::*;
 use crate::application::Application;
 use clap::{App, Arg, SubCommand};
 
+// XXX: mb functions for every command, and mb args
 impl<'a, 'b> Cli<'a, 'b> {
+    // create db arg
+    // `-b, --database .tree.yml`
+    pub fn arg_db() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_DB)
+            .short(KEY_DB_SHORT)
+            .long(KEY_DB_LONG)
+            .value_name(KEY_DB_FILE)
+            .default_value(DEFAULT_DB_FILENAME)
+            .help(KEY_DB_HELP)
+            .takes_value(true)
+    }
+
+    // create path arg
+    // `[PATH]`
+    pub fn arg_path() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_PATH)
+            .help(KEY_PATH_HELP)
+            .default_value(DEFAULT_PATH)
+            .index(1)
+    }
+
+    pub fn arg_bitflag_name() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_NAME)
+            .short(KEY_BITFLAG_NAME_SHORT)
+            .long(KEY_BITFLAG_NAME_LONG)
+            .help(KEY_BITFLAG_NAME_HELP)
+    }
+
+    pub fn arg_bitflag_desc() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_DESC)
+            .short(KEY_BITFLAG_DESC_SHORT)
+            .long(KEY_BITFLAG_DESC_LONG)
+            .help(KEY_BITFLAG_DESC_HELP)
+    }
+
+    pub fn arg_bitflag_accessed() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_ACCESSED)
+            .short(KEY_BITFLAG_ACCESSED_SHORT)
+            .long(KEY_BITFLAG_ACCESSED_LONG)
+            .help(KEY_BITFLAG_ACCESSED_HELP)
+    }
+
+    pub fn arg_bitflag_created() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_CREATED)
+            .short(KEY_BITFLAG_CREATED_SHORT)
+            .long(KEY_BITFLAG_CREATED_LONG)
+            .help(KEY_BITFLAG_CREATED_HELP)
+    }
+
+    pub fn arg_bitflag_modified() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_MODIFIED)
+            .short(KEY_BITFLAG_MODIFIED_SHORT)
+            .long(KEY_BITFLAG_MODIFIED_LONG)
+            .help(KEY_BITFLAG_MODIFIED_HELP)
+    }
+
+    pub fn arg_bitflag_size() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_SIZE)
+            .short(KEY_BITFLAG_SIZE_SHORT)
+            .long(KEY_BITFLAG_SIZE_LONG)
+            .help(KEY_BITFLAG_SIZE_HELP)
+    }
+
+    pub fn arg_bitflag_type() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_FILE_TYPE)
+            .short(KEY_BITFLAG_FILE_TYPE_SHORT)
+            .long(KEY_BITFLAG_FILE_TYPE_LONG)
+            .help(KEY_BITFLAG_FILE_TYPE_HELP)
+    }
+
+    pub fn arg_bitflag_tags() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_TAGS)
+            .short(KEY_BITFLAG_TAGS_SHORT)
+            .long(KEY_BITFLAG_TAGS_LONG)
+            .help(KEY_BITFLAG_TAGS_HELP)
+    }
+
+    pub fn arg_bitflag_comment() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_COMMENT)
+            .short(KEY_BITFLAG_COMMENT_SHORT)
+            .long(KEY_BITFLAG_COMMENT_LONG)
+            .help(KEY_BITFLAG_COMMENT_HELP)
+    }
+
     // prepare and use clap functions for cli
     pub fn new(application: Application) -> Self {
         let app = App::new(APP_NAME)
@@ -54,78 +139,23 @@ impl<'a, 'b> Cli<'a, 'b> {
             .subcommand(
                 SubCommand::with_name(CMD_LS)
                     .about(CMD_LS_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    )
-                    .arg(Arg::with_name(KEY_PATH).help(KEY_PATH_HELP).index(1)),
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_path()),
             )
             // sort
             .subcommand(
                 SubCommand::with_name(CMD_SORT)
                     .about(CMD_SORT_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_NAME)
-                            .short(KEY_BITFLAG_NAME_SHORT)
-                            .long(KEY_BITFLAG_NAME_LONG)
-                            .help(KEY_BITFLAG_NAME_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_DESC)
-                            .short(KEY_BITFLAG_DESC_SHORT)
-                            .long(KEY_BITFLAG_DESC_LONG)
-                            .help(KEY_BITFLAG_DESC_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_ACCESSED)
-                            .short(KEY_BITFLAG_ACCESSED_SHORT)
-                            .long(KEY_BITFLAG_ACCESSED_LONG)
-                            .help(KEY_BITFLAG_ACCESSED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_MODIFIED)
-                            .short(KEY_BITFLAG_MODIFIED_SHORT)
-                            .long(KEY_BITFLAG_MODIFIED_LONG)
-                            .help(KEY_BITFLAG_MODIFIED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_CREATED)
-                            .short(KEY_BITFLAG_CREATED_SHORT)
-                            .long(KEY_BITFLAG_CREATED_LONG)
-                            .help(KEY_BITFLAG_CREATED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_SIZE)
-                            .short(KEY_BITFLAG_SIZE_SHORT)
-                            .long(KEY_BITFLAG_SIZE_LONG)
-                            .help(KEY_BITFLAG_SIZE_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_FILE_TYPE)
-                            .short(KEY_BITFLAG_FILE_TYPE_SHORT)
-                            .long(KEY_BITFLAG_FILE_TYPE_LONG)
-                            .help(KEY_BITFLAG_FILE_TYPE_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_TAGS)
-                            .short(KEY_BITFLAG_TAGS_SHORT)
-                            .long(KEY_BITFLAG_TAGS_LONG)
-                            .help(KEY_BITFLAG_TAGS_HELP),
-                    )
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_bitflag_name())
+                    .arg(Cli::arg_bitflag_desc())
+                    .arg(Cli::arg_bitflag_accessed())
+                    .arg(Cli::arg_bitflag_created())
+                    .arg(Cli::arg_bitflag_modified())
+                    .arg(Cli::arg_bitflag_size())
+                    .arg(Cli::arg_bitflag_type())
+                    .arg(Cli::arg_bitflag_tags())
+                    .arg(Cli::arg_bitflag_comment())
                     .arg(
                         Arg::with_name(KEY_BITFLAG_SORT_ORDER)
                             .short(KEY_BITFLAG_SORT_ORDER_SHORT)
@@ -140,21 +170,14 @@ impl<'a, 'b> Cli<'a, 'b> {
             .subcommand(
                 SubCommand::with_name(CMD_CLEAR)
                     .about(CMD_CLEAR_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_DIR)
-                            .help(KEY_DIR_HELP)
-                            .default_value(DEFAULT_DIR_FILENAME)
-                            .index(1),
-                    )
+                    .arg(Cli::arg_db())
+                    //.arg(
+                    //Arg::with_name(KEY_DIR)
+                    //.help(KEY_DIR_HELP)
+                    //.default_value(DEFAULT_DIR_FILENAME)
+                    //.index(1),
+                    //)
+                    .arg(Cli::arg_path())
                     .arg(
                         Arg::with_name(KEY_RECURSIVE)
                             .short(KEY_RECURSIVE_SHORT)
@@ -167,48 +190,14 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .long(KEY_BITFLAG_NAME_LONG)
                             .help(KEY_BITFLAG_NAME_HELP),
                     )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_DESC)
-                            .short(KEY_BITFLAG_DESC_SHORT)
-                            .long(KEY_BITFLAG_DESC_LONG)
-                            .help(KEY_BITFLAG_DESC_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_ACCESSED)
-                            .short(KEY_BITFLAG_ACCESSED_SHORT)
-                            .long(KEY_BITFLAG_ACCESSED_LONG)
-                            .help(KEY_BITFLAG_ACCESSED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_MODIFIED)
-                            .short(KEY_BITFLAG_MODIFIED_SHORT)
-                            .long(KEY_BITFLAG_MODIFIED_LONG)
-                            .help(KEY_BITFLAG_MODIFIED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_CREATED)
-                            .short(KEY_BITFLAG_CREATED_SHORT)
-                            .long(KEY_BITFLAG_CREATED_LONG)
-                            .help(KEY_BITFLAG_CREATED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_SIZE)
-                            .short(KEY_BITFLAG_SIZE_SHORT)
-                            .long(KEY_BITFLAG_SIZE_LONG)
-                            .help(KEY_BITFLAG_SIZE_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_FILE_TYPE)
-                            .short(KEY_BITFLAG_FILE_TYPE_SHORT)
-                            .long(KEY_BITFLAG_FILE_TYPE_LONG)
-                            .help(KEY_BITFLAG_FILE_TYPE_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_TAGS)
-                            .short(KEY_BITFLAG_TAGS_SHORT)
-                            .long(KEY_BITFLAG_TAGS_LONG)
-                            .help(KEY_BITFLAG_TAGS_HELP),
-                    )
+                    .arg(Cli::arg_bitflag_desc())
+                    .arg(Cli::arg_bitflag_accessed())
+                    .arg(Cli::arg_bitflag_created())
+                    .arg(Cli::arg_bitflag_modified())
+                    .arg(Cli::arg_bitflag_size())
+                    .arg(Cli::arg_bitflag_type())
+                    .arg(Cli::arg_bitflag_tags())
+                    .arg(Cli::arg_bitflag_comment())
                     .arg(
                         Arg::with_name(KEY_BITFLAG_CHILDREN)
                             .short(KEY_BITFLAG_CHILDREN_SHORT)
@@ -220,15 +209,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .subcommand(
                 SubCommand::with_name(CMD_INIT)
                     .about(CMD_INIT_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    )
+                    .arg(Cli::arg_db())
                     .arg(
                         Arg::with_name(KEY_IGNORE)
                             .short(KEY_IGNORE_SHORT)
@@ -240,60 +221,23 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .multiple(true),
                         //.min_values(1),
                     )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_NAME)
-                            .short(KEY_BITFLAG_NAME_SHORT)
-                            .long(KEY_BITFLAG_NAME_LONG)
-                            .help(KEY_BITFLAG_NAME_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_DESC)
-                            .short(KEY_BITFLAG_DESC_SHORT)
-                            .long(KEY_BITFLAG_DESC_LONG)
-                            .help(KEY_BITFLAG_DESC_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_ACCESSED)
-                            .short(KEY_BITFLAG_ACCESSED_SHORT)
-                            .long(KEY_BITFLAG_ACCESSED_LONG)
-                            .help(KEY_BITFLAG_ACCESSED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_MODIFIED)
-                            .short(KEY_BITFLAG_MODIFIED_SHORT)
-                            .long(KEY_BITFLAG_MODIFIED_LONG)
-                            .help(KEY_BITFLAG_MODIFIED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_CREATED)
-                            .short(KEY_BITFLAG_CREATED_SHORT)
-                            .long(KEY_BITFLAG_CREATED_LONG)
-                            .help(KEY_BITFLAG_CREATED_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_SIZE)
-                            .short(KEY_BITFLAG_SIZE_SHORT)
-                            .long(KEY_BITFLAG_SIZE_LONG)
-                            .help(KEY_BITFLAG_SIZE_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_FILE_TYPE)
-                            .short(KEY_BITFLAG_FILE_TYPE_SHORT)
-                            .long(KEY_BITFLAG_FILE_TYPE_LONG)
-                            .help(KEY_BITFLAG_FILE_TYPE_HELP),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_TAGS)
-                            .short(KEY_BITFLAG_TAGS_SHORT)
-                            .long(KEY_BITFLAG_TAGS_LONG)
-                            .help(KEY_BITFLAG_TAGS_HELP),
-                    )
+                    .arg(Cli::arg_bitflag_name())
+                    .arg(Cli::arg_bitflag_desc())
+                    .arg(Cli::arg_bitflag_accessed())
+                    .arg(Cli::arg_bitflag_created())
+                    .arg(Cli::arg_bitflag_modified())
+                    .arg(Cli::arg_bitflag_size())
+                    .arg(Cli::arg_bitflag_type())
+                    .arg(Cli::arg_bitflag_tags())
+                    .arg(Cli::arg_bitflag_comment())
+                    // -f, --force
                     .arg(
                         Arg::with_name(KEY_FORCE)
                             .short(KEY_FORCE_SHORT)
                             .long(KEY_FORCE_LONG)
                             .help(KEY_FORCE_HELP),
                     )
+                    // -E?
                     .arg(
                         Arg::with_name(KEY_EMPTY)
                             .short(KEY_EMPTY_SHORT)
@@ -309,52 +253,33 @@ impl<'a, 'b> Cli<'a, 'b> {
                     //.default_value(DEFAULT_DIR_FILENAME)
                     //.takes_value(true),
                     //),
-                    .arg(
-                        Arg::with_name(KEY_DIR)
-                            .help(KEY_DIR_HELP)
-                            .default_value(DEFAULT_DIR_FILENAME)
-                            .index(1),
-                    ),
+                    //.arg(
+                    //Arg::with_name(KEY_DIR)
+                    //.help(KEY_DIR_HELP)
+                    //.default_value(DEFAULT_DIR_FILENAME)
+                    //.index(1),
+                    //),
+                    .arg(Cli::arg_path()),
             )
             // add
             .subcommand(
                 SubCommand::with_name(CMD_ADD)
                     .about(CMD_ADD_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .help(KEY_DB_HELP)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .takes_value(true),
-                    )
+                    .arg(Cli::arg_db())
+                    // -R, --recursive
                     .arg(
                         Arg::with_name(KEY_RECURSIVE)
                             .short(KEY_RECURSIVE_SHORT)
                             .long(KEY_RECURSIVE_LONG)
                             .help(KEY_RECURSIVE_HELP),
                     )
-                    .arg(
-                        Arg::with_name(KEY_FILE_NAME)
-                            .help(KEY_FILE_NAME_HELP)
-                            .required(true)
-                            .index(1),
-                    ),
+                    .arg(Cli::arg_path()),
             )
             // edit
             .subcommand(
                 SubCommand::with_name(CMD_EDIT)
                     .about(CMD_EDIT_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .help(KEY_DB_HELP)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .takes_value(true),
-                    )
+                    .arg(Cli::arg_db())
                     .arg(
                         Arg::with_name(KEY_DESC)
                             .short(KEY_DESC_SHORT)
@@ -380,40 +305,19 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .help(KEY_COMMENT_HELP)
                             .takes_value(true),
                     )
-                    .arg(
-                        Arg::with_name(KEY_FILE_NAME)
-                            .help(KEY_FILE_NAME_HELP)
-                            .required(true)
-                            .index(1),
-                    ),
+                    .arg(Cli::arg_path()),
             )
             // status
             .subcommand(
                 SubCommand::with_name(CMD_STATUS)
                     .about(CMD_STATUS_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    ),
+                    .arg(Cli::arg_db()),
             )
             // rm
             .subcommand(
                 SubCommand::with_name(CMD_RM)
                     .about(CMD_RM_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    )
+                    .arg(Cli::arg_db())
                     .arg(
                         Arg::with_name(KEY_DESC)
                             .short(KEY_DESC_SHORT)
@@ -422,26 +326,20 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .help(KEY_DESC_HELP)
                             .takes_value(true),
                     )
-                    .arg(
-                        Arg::with_name(KEY_FILE_NAME)
-                            .help(KEY_FILE_NAME_HELP)
-                            .required(true)
-                            .index(1),
-                    ),
+                    .arg(Cli::arg_path()),
+            )
+            // update
+            .subcommand(
+                SubCommand::with_name(CMD_UPDATE)
+                    .about(CMD_UPDATE_TEXT)
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_path()),
             )
             // read
             .subcommand(
                 SubCommand::with_name(CMD_READ)
                     .about(CMD_READ_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    )
+                    .arg(Cli::arg_db())
                     .arg(
                         Arg::with_name(KEY_DESC)
                             .short(KEY_DESC_SHORT)
@@ -450,26 +348,13 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .help(KEY_DESC_HELP)
                             .takes_value(true),
                     )
-                    .arg(
-                        Arg::with_name(KEY_FILE_NAME)
-                            .help(KEY_FILE_NAME_HELP)
-                            .required(true)
-                            .index(1),
-                    ),
+                    .arg(Cli::arg_path()),
             )
             // print
             .subcommand(
                 SubCommand::with_name(CMD_PRINT)
                     .about(CMD_PRINT_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .default_value(DEFAULT_DB_FILENAME)
-                            .value_name(KEY_DB_FILE)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    )
+                    .arg(Cli::arg_db())
                     .arg(
                         Arg::with_name(KEY_TEMPLATE)
                             .short(KEY_TEMPLATE_SHORT)
@@ -492,19 +377,13 @@ impl<'a, 'b> Cli<'a, 'b> {
             .subcommand(
                 SubCommand::with_name(CMD_PRINT_META)
                     .about(CMD_PRINT_META_TEXT)
-                    .arg(
-                        Arg::with_name(KEY_DB)
-                            .short(KEY_DB_SHORT)
-                            .long(KEY_DB_LONG)
-                            .value_name(KEY_DB_FILE)
-                            .help(KEY_DB_HELP)
-                            .takes_value(true),
-                    ),
+                    .arg(Cli::arg_db()),
             );
 
         Cli {
             cli: app,
             app: application,
+            //matches: app.get_matches(),
         }
     }
 }
