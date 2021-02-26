@@ -26,6 +26,7 @@ pub type NodeWeak = Weak<RefCell<NodeData>>;
 #[derive(Debug, Clone, Default)]
 pub struct Node(pub NodeRc);
 
+// XXX: mb ignore in every node?
 /// main structure holding data
 #[derive(Debug, Clone, Default)]
 pub struct NodeData {
@@ -67,10 +68,11 @@ pub struct NodeData {
 }
 
 impl Node {
-    // add child, create children vector if not exist (for first child)
+    /// add child, create children vec if not exist (for first child)
     pub fn add_child(&self, child: NodeRc) {
         // save parent
         child.borrow_mut().parent = Some(Rc::downgrade(&self.0));
+
         // create vec if not exists, and append
         let child = Node(child);
         if self.has_children() {
@@ -83,7 +85,7 @@ impl Node {
         }
     }
 
-    // add files and directories to self (TreeEntry)
+    /// add files and directories to self (TreeEntry)
     // XXX: additional options as an argument
     // NOTE: empty file field for root directory
     pub fn add_path<P: AsRef<Path>>(
@@ -143,28 +145,31 @@ impl Node {
     pub fn bitflag_to_string(bitflag: usize) -> String {
         let mut s = String::new();
         if (bitflag & NODE_DESC) > 0 {
-            s = format!("{} desc ", s);
+            s = format!("{}desc ", s);
         }
         if (bitflag & NODE_SHA256) > 0 {
-            s = format!("{} sha256 ", s);
+            s = format!("{}sha256 ", s);
         }
         if (bitflag & NODE_MODIFIED) > 0 {
-            s = format!("{} modified ", s);
+            s = format!("{}modified ", s);
         }
         if (bitflag & NODE_ACCESSED) > 0 {
-            s = format!("{} accessed ", s);
+            s = format!("{}accessed ", s);
         }
         if (bitflag & NODE_CREATED) > 0 {
-            s = format!("{} created ", s);
+            s = format!("{}created ", s);
         }
         if (bitflag & NODE_SIZE) > 0 {
-            s = format!("{} size ", s);
+            s = format!("{}size ", s);
         }
         if (bitflag & NODE_FILE_TYPE) > 0 {
-            s = format!("{} type ", s);
+            s = format!("{}type ", s);
         }
         if (bitflag & NODE_TAGS) > 0 {
-            s = format!("{} tags ", s);
+            s = format!("{}tags ", s);
+        }
+        if (bitflag & NODE_COMMENT) > 0 {
+            s = format!("{}comment ", s);
         }
         s
     }
@@ -343,6 +348,14 @@ impl Node {
 
     pub fn desc<S: Into<String>>(&self, desc: Option<S>) {
         self.borrow_mut().desc = desc.map(|s| s.into());
+    }
+
+    /// check if given path exist in node tree
+    pub fn exists<P: AsRef<Path>>(&self, path: P) -> bool {
+        match self.get(path) {
+            Some(_) => true,
+            None => false,
+        }
     }
 
     pub fn comment<S: Into<String>>(&self, comment: Option<S>) {
@@ -605,10 +618,7 @@ impl Node {
     }
 
     pub fn get_parent(&self) -> Option<NodeRc> {
-        match &self.0.borrow().parent {
-            Some(parent) => parent.upgrade(),
-            None => None,
-        }
+        self.0.borrow().parent.as_ref().and_then(Weak::upgrade)
     }
 
     pub fn get_parent_by_name<P: AsRef<Path>>(&self, path: P) -> Option<NodeRc> {
@@ -783,6 +793,7 @@ impl Node {
 
     pub fn to_string_ext(&self, bitflag: usize) -> String {
         let mut s = "".to_string();
+        let node = self.borrow();
         if (bitflag & NODE_NAME) > 0 {
             //s = format!("{}{:50} ", s, name);
             s = format!(
@@ -792,48 +803,48 @@ impl Node {
             );
         }
         if (bitflag & NODE_DESC) > 0 {
-            if let Some(desc) = &self.borrow().desc {
+            if let Some(desc) = &node.desc {
                 s = format!("{}\"{}\" ", s, desc);
             }
         }
         if (bitflag & NODE_SHA256) > 0 {
-            if let Some(sha256) = &self.borrow().sha256 {
+            if let Some(sha256) = &node.sha256 {
                 s = format!("{}{} ", s, sha256);
             }
         }
         if (bitflag & NODE_STATUS) > 0 {
-            if let Some(status) = &self.borrow().status {
+            if let Some(status) = &node.status {
                 s = format!("{}{} ", s, status);
             }
         }
         if (bitflag & NODE_MODIFIED) > 0 {
-            if let Some(modified) = &self.borrow().modified {
+            if let Some(modified) = &node.modified {
                 s = format!("{}{} ", s, modified);
             }
         }
         if (bitflag & NODE_ACCESSED) > 0 {
-            if let Some(accessed) = &self.borrow().accessed {
+            if let Some(accessed) = &node.accessed {
                 s = format!("{}{} ", s, accessed);
             }
         }
         if (bitflag & NODE_CREATED) > 0 {
-            if let Some(created) = &self.borrow().created {
+            if let Some(created) = &node.created {
                 s = format!("{}{} ", s, created);
             }
         }
         if (bitflag & NODE_SIZE) > 0 {
-            if let Some(size) = &self.borrow().size {
+            if let Some(size) = &node.size {
                 s = format!("{}{} ", s, size);
             }
         }
         if (bitflag & NODE_FILE_TYPE) > 0 {
-            if let Some(file_type) = &self.borrow().file_type {
+            if let Some(file_type) = &node.file_type {
                 s = format!("{}{} ", s, file_type);
             }
         }
         // TODO: print
         if (bitflag & NODE_TAGS) > 0 {
-            if let Some(tags) = &self.borrow().tags {
+            if let Some(tags) = &node.tags {
                 s = format!("{} {:?}", s, tags);
             }
         }

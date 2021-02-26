@@ -1,15 +1,13 @@
-use std::path::{Path, PathBuf};
-
-use crate::cli::cli::Cli;
 use crate::cli::common::*;
-use clap::{App, ArgMatches};
+use clap::ArgMatches;
+use std::fmt;
+use std::path::{Path, PathBuf};
 
 use crate::file_tree::{FileTree, Node, NODE_DEFAULT, NODE_NONE, SORT_DSC};
 use crate::file_tree::{
     NODE_ACCESSED, NODE_CHILDREN, NODE_CREATED, NODE_DESC, NODE_FILE_TYPE, NODE_MODIFIED,
     NODE_NAME, NODE_SIZE, NODE_TAGS,
 };
-use log::LevelFilter;
 use std::fs;
 
 /// Command structure
@@ -23,12 +21,27 @@ pub struct Command {
     pub output: PathBuf,
     /// Template file path
     pub template: PathBuf,
-    /// ???
-    pub file: Option<PathBuf>,
+    // ???
+    //pub file: Option<PathBuf>,
     /// Bitflags
     pub bitflag: usize,
     /// Ignore list
     pub ignore: Option<Vec<String>>,
+}
+
+impl fmt::Display for Command {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let db = self.db.to_str().unwrap();
+        let path = self.path.to_str().unwrap();
+        let output = self.output.to_str().unwrap();
+        let bitflag = Node::bitflag_to_string(self.bitflag);
+        //&self.ignore
+        write!(
+            f,
+            "db: {} path: {} output: {} bitflag: {}",
+            db, path, output, bitflag
+        )
+    }
 }
 
 impl Command {
@@ -122,7 +135,7 @@ impl Command {
 
         // file exists?
         if !self.path.exists() {
-            error!("file not exists");
+            error!("file or path not exists");
             return;
         }
 
@@ -135,7 +148,7 @@ impl Command {
             } else {
                 println!(
                     "path not found in db: {:?} (file or path not exists)",
-                    &self.file
+                    &self.path
                 );
             }
 
@@ -175,7 +188,7 @@ impl Command {
 
         // file exists?
         if !self.path.exists() {
-            error!("file not exists");
+            error!("file or path not exists");
             return;
         }
 
@@ -188,9 +201,9 @@ impl Command {
                 entry.borrow_mut().tags = tags;
                 entry.borrow_mut().comment = comment.map(String::from);
             } else {
-                println!(
+                error!(
                     "path not found in db: {:?} (file or path not exists)",
-                    &self.file
+                    &self.path
                 );
             }
             // save
@@ -279,11 +292,10 @@ impl Command {
 
         if let Ok(node) = Node::load(&self.db) {
             // get entry if exists
-            //let rendered = tree
-            //if let Err(err) = tree.ls(&path) {
-            //error!("{}", err);
-            //}
-            //node.ls(Path::new("."));
+            if !node.exists(&self.path) {
+                error!("path not exists");
+                return;
+            }
             if node.remove(&self.path).is_some() {
                 // save
                 //node.ls(Path::new("."));
@@ -439,10 +451,7 @@ impl Command {
     }
 
     pub fn debug_msg(&self, cmd: &str) {
-        debug!(
-            "command: {} path: {:?} bitflag: {:b} ignore: {:?}",
-            cmd, &self.path, &self.bitflag, &self.ignore
-        );
+        debug!("command: {} args: {}", cmd, &self,);
     }
 
     pub fn get_args(&mut self, matches: &ArgMatches) {

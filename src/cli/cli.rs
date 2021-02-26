@@ -3,12 +3,10 @@ use crate::cli::command::Command;
 use crate::cli::common::*;
 use crate::error::Error;
 use crate::mylog::Log;
-use clap::{App, ArgMatches};
+use clap::App;
 
-use crate::file_tree::{FileTree, Node, NODE_DEFAULT, NODE_NONE, SORT_DSC};
 use log::LevelFilter;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 //#[derive(Default, Debug)]
 pub struct Cli<'a, 'b> {
