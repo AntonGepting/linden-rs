@@ -85,6 +85,10 @@ impl Node {
         }
     }
 
+    pub fn to_weak(node: &Node) -> NodeWeak {
+        Rc::downgrade(&node.0)
+    }
+
     /// add files and directories to self (TreeEntry)
     // XXX: additional options as an argument
     // NOTE: empty file field for root directory
@@ -102,6 +106,7 @@ impl Node {
     // NOTE: empty file field for root directory
     // XXX: add with and without children
     // XXX: add root . directory fields
+    // XXX: check existance and accept if exist path
     pub fn add_path_ext<P: AsRef<Path>>(
         &mut self,
         parent: Option<NodeWeak>,
@@ -668,8 +673,6 @@ impl Node {
         };
         (tab.to_string(), link.to_string())
     }
-
-    //pub fn remove_child(&self)
 
     pub fn has_children(&self) -> bool {
         self.borrow().children.is_some()

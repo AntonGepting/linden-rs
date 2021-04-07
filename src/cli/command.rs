@@ -1,4 +1,4 @@
-use crate::cli::common::*;
+use crate::cli::constants::*;
 use clap::ArgMatches;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -13,20 +13,24 @@ use std::fs;
 /// Command structure
 #[derive(Default, Debug)]
 pub struct Command {
-    /// Database path (default: `.tree.yml`)
+    /// `-b, --database <DB>` Database path (default: `.tree.yml`)
     pub db: PathBuf,
-    /// Target directory/file path (default: `.`)
+    /// `[PATH]` Target directory/file path (default: `.`)
     pub path: PathBuf,
-    /// Output file path
+    /// `-o, --output <OUTPUT>` Output file path
     pub output: PathBuf,
-    /// Template file path
+    /// `-t, --template` Template file path
     pub template: PathBuf,
     // ???
     //pub file: Option<PathBuf>,
     /// Bitflags
     pub bitflag: usize,
-    /// Ignore list
+    /// -i, --ignore <FILE1> Ignore list
     pub ignore: Option<Vec<String>>,
+    /// -r, --recursive Recursive processing
+    pub recursive: bool,
+    ///
+    pub tags: Option<Vec<String>>,
 }
 
 impl fmt::Display for Command {
@@ -125,13 +129,11 @@ impl Command {
         self.get_args(&matches);
         self.debug_msg(CMD_ADD);
 
+        // db exists?
         if !self.db.exists() {
             error!("db not exists: {:?}", self.db);
             return;
         }
-
-        // get description
-        let recursive = matches.value_of(KEY_RECURSIVE);
 
         // file exists?
         if !self.path.exists() {
@@ -140,20 +142,28 @@ impl Command {
         }
 
         // db open successed?
-        if let Ok(node) = Node::load(&self.db) {
-            // get entry if exists
-            if let Some(_entry) = node.get(&self.path) {
-                // modify description
-                //entry.borrow_mut().desc = desc.map(String::from);
-            } else {
-                println!(
-                    "path not found in db: {:?} (file or path not exists)",
-                    &self.path
-                );
+        if let Ok(mut node) = Node::load(&self.db) {
+            if node.exists(&self.path) {
+                error!("file or path is already tracking");
+                return;
             }
 
-        // save
-        //node.save(&db).unwrap();
+            let child =
+                Node::create_from_path_ext(&self.path, self.ignore.as_ref(), self.bitflag).unwrap();
+
+            node.add_child(child.0);
+
+            // add new path
+            //node.add_path_ext(
+            //Some(Node::to_weak(&node)),
+            //&self.path,
+            //self.ignore.as_ref(),
+            //self.bitflag,
+            //)
+            //.unwrap();
+
+            // save
+            node.save(&self.db).unwrap();
         } else {
             error!("db read error");
             return;
@@ -173,16 +183,6 @@ impl Command {
 
         // get description
         let desc = matches.value_of(KEY_DESC);
-        // get tags
-        let v: Vec<String>;
-        let tags = match matches.values_of(KEY_TAGS) {
-            Some(t) => {
-                v = t.map(|s| s.to_string()).collect();
-                Some(v)
-            }
-            None => None,
-        };
-
         // get comment
         let comment = matches.value_of(KEY_COMMENT);
 
@@ -198,7 +198,7 @@ impl Command {
             if let Some(entry) = node.get(&self.path) {
                 // modify description
                 entry.borrow_mut().desc = desc.map(String::from);
-                entry.borrow_mut().tags = tags;
+                entry.borrow_mut().tags = self.tags.clone();
                 entry.borrow_mut().comment = comment.map(String::from);
             } else {
                 error!(
@@ -216,7 +216,7 @@ impl Command {
 
     pub fn merge(&mut self, matches: &ArgMatches) {
         self.get_args(&matches);
-        //self.debug_msg(CMD_MERGE);
+        self.debug_msg(CMD_MERGE);
 
         if !self.db.exists() {
             error!("db not exists");
@@ -280,6 +280,8 @@ impl Command {
         }
     }
 
+    /// remove file/path
+    /// rm [PATH] -R
     pub fn rm(&mut self, matches: &ArgMatches) {
         self.get_args(&matches);
         self.debug_msg(CMD_RM);
@@ -296,15 +298,14 @@ impl Command {
                 error!("path not exists");
                 return;
             }
+
             if node.remove(&self.path).is_some() {
-                // save
-                //node.ls(Path::new("."));
                 node.save(&self.db).unwrap();
             } else {
                 error!("cant remove");
             }
         } else {
-            error!("you must specify path");
+            error!("cant load db");
         }
     }
 
@@ -428,7 +429,7 @@ impl Command {
     }
 
     // XXX: add path support and children flag
-    // clear
+    /// clear fields for path
     pub fn clear(&mut self, matches: &ArgMatches) {
         self.get_args(&matches);
         self.debug_msg(CMD_CLEAR);
@@ -439,12 +440,10 @@ impl Command {
             return;
         }
 
-        let recursive = matches.is_present(KEY_RECURSIVE);
-
         // clear and write
         if let Ok(tree) = Node::load(&self.db) {
             if let Some(node) = tree.get(&self.path) {
-                node.clear_ext(self.bitflag, recursive);
+                node.clear_ext(self.bitflag, self.recursive);
                 tree.save(&self.db).unwrap();
             }
         }
@@ -480,11 +479,24 @@ impl Command {
         // file
         //self.file = matches.value_of(KEY_FILE_NAME).map(|p| PathBuf::from(p));
 
+        // get description
+        self.recursive = matches.is_present(KEY_RECURSIVE);
+
         // get ignore list
         let v: Vec<String>;
         self.ignore = match matches.values_of(KEY_IGNORE) {
             Some(files) => {
                 v = files.map(|s| s.to_string()).collect();
+                Some(v)
+            }
+            None => None,
+        };
+
+        // get tags
+        let v: Vec<String>;
+        self.tags = match matches.values_of(KEY_TAGS) {
+            Some(t) => {
+                v = t.map(|s| s.to_string()).collect();
                 Some(v)
             }
             None => None,
@@ -504,6 +516,8 @@ impl Command {
             (CMD_SORT, Some(matches)) => self.sort(matches),
             (CMD_CLEAR, Some(matches)) => self.clear(matches),
             (CMD_UPDATE, Some(matches)) => self.update(matches),
+            (CMD_ADD, Some(matches)) => self.add(matches),
+            (CMD_MERGE, Some(matches)) => self.merge(matches),
             _ => info!("{}", LOG_CLI_NO_SUBCOMMAND_RECIEVED),
         }
     }

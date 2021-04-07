@@ -1,5 +1,5 @@
 use super::cli::Cli;
-use super::common::*;
+use super::constants::*;
 use crate::application::Application;
 use clap::{App, Arg, SubCommand};
 
@@ -26,6 +26,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .index(1)
     }
 
+    /// name as bitflag
     pub fn arg_bitflag_name() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_NAME)
             .short(KEY_BITFLAG_NAME_SHORT)
@@ -33,6 +34,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_NAME_HELP)
     }
 
+    /// desc as bitflag
     pub fn arg_bitflag_desc() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_DESC)
             .short(KEY_BITFLAG_DESC_SHORT)
@@ -40,6 +42,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_DESC_HELP)
     }
 
+    /// accessed time as bitflag
     pub fn arg_bitflag_accessed() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_ACCESSED)
             .short(KEY_BITFLAG_ACCESSED_SHORT)
@@ -47,6 +50,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_ACCESSED_HELP)
     }
 
+    /// created time as bitflag
     pub fn arg_bitflag_created() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_CREATED)
             .short(KEY_BITFLAG_CREATED_SHORT)
@@ -54,6 +58,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_CREATED_HELP)
     }
 
+    /// modified time as bitflag
     pub fn arg_bitflag_modified() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_MODIFIED)
             .short(KEY_BITFLAG_MODIFIED_SHORT)
@@ -61,6 +66,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_MODIFIED_HELP)
     }
 
+    /// size as bitflag
     pub fn arg_bitflag_size() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_SIZE)
             .short(KEY_BITFLAG_SIZE_SHORT)
@@ -68,6 +74,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_SIZE_HELP)
     }
 
+    /// type as bitflag
     pub fn arg_bitflag_type() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_FILE_TYPE)
             .short(KEY_BITFLAG_FILE_TYPE_SHORT)
@@ -75,6 +82,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_FILE_TYPE_HELP)
     }
 
+    /// tags as bitflag
     pub fn arg_bitflag_tags() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_TAGS)
             .short(KEY_BITFLAG_TAGS_SHORT)
@@ -82,6 +90,7 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_TAGS_HELP)
     }
 
+    /// comment as bitflag
     pub fn arg_bitflag_comment() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_COMMENT)
             .short(KEY_BITFLAG_COMMENT_SHORT)

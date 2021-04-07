@@ -1,6 +1,6 @@
 use crate::application::Application;
 use crate::cli::command::Command;
-use crate::cli::common::*;
+use crate::cli::constants::*;
 use crate::error::Error;
 use crate::mylog::Log;
 use clap::App;

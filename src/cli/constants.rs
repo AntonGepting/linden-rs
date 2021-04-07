@@ -1,6 +1,3 @@
-use super::cli::Cli;
-use clap::ArgMatches;
-
 pub const LOG_CLI_NO_SUBCOMMAND_RECIEVED: &str = "no subcommand recognized";
 pub const APP_NAME: &str = "Linden";
 //const DEFAULT_PROJECT_FILENAME: &'static str = "project.mosaic.yml";
@@ -57,14 +54,20 @@ pub const CMD_READ_TEXT: &str = "read file node";
 pub const CMD_PRINT: &str = "export";
 pub const CMD_PRINT_TEXT: &str = "print tree";
 // delete [-b <DB>] <FILE> [-sdamcst]
+/// rm [-b <DB>] [PATH] [-r]
+///  -b, --database <DB> DB file path
+///  PATH path/file
+///  -r, --recursive
 pub const CMD_RM: &str = "rm";
 pub const CMD_RM_TEXT: &str = "remove file node";
 // print [-b <DB>]
 pub const CMD_PRINT_META: &str = "print";
 pub const CMD_PRINT_META_TEXT: &str = "print tree meta information";
-// status [-b <DB>]
+
+/// status [-b <DB>]
 pub const CMD_STATUS: &str = "status";
 pub const CMD_STATUS_TEXT: &str = "status information";
+
 // XXX: sort [-b <DB>] [-z --sort-by-key, -s, --sort-order asc, desc, dir, file, symlink]
 /// sort [-b <DB>] [-z --sort-by-key, -s, --sort-order asc, desc]
 ///  -, --name
@@ -79,19 +82,21 @@ pub const CMD_STATUS_TEXT: &str = "status information";
 ///  -, --descending
 pub const CMD_SORT: &str = "sort";
 pub const CMD_SORT_TEXT: &str = "sort tree";
+
 // merge
-//pub const CMD_MERGE: &str = "merge";
-//pub const CMD_MERGE_TEXT: &str = "merge tree";
+pub const CMD_MERGE: &str = "merge";
+pub const CMD_MERGE_TEXT: &str = "merge tree";
+
 // update
 pub const CMD_UPDATE: &str = "update";
 pub const CMD_UPDATE_TEXT: &str = "update tree";
 
 /// add [-b <DB>] [PATH] [-r]
 /// add file/path
-///  -b <DB>, --database <DB>    DB file path
+///  -b, --database <DB>    DB file path
 ///  PATH               entry file path
 ///
-///  -r, --recurse     add children
+///  -r, --recursive     add children
 pub const CMD_ADD: &str = "add";
 pub const CMD_ADD_TEXT: &str = "add path or file";
 
