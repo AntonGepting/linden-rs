@@ -12,4 +12,5 @@ pub use common::*;
 pub use db::file_tree::FileTree;
 pub use db::tree_entry::TreeEntry;
 pub use db::tree_entry_body::TreeEntryBody;
+pub use node::node::ColorScheme;
 pub use node::node::Node;

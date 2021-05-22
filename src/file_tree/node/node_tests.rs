@@ -174,14 +174,16 @@ fn get_path() {
 // colored output of changes in file
 #[test]
 fn to_colored_string_ext() {
-    use crate::file_tree::{Node, NODE_COMMENT, NODE_DESC, NODE_NAME, NODE_SIZE};
+    use crate::file_tree::{ColorScheme, Node, NODE_COMMENT, NODE_DESC, NODE_NAME, NODE_SIZE};
 
     let mut node = Node::to_node(Node::new("test_node.ext", None));
     node.borrow_mut().size = Some(10);
     node.borrow_mut().desc = Some("description".to_string());
     node.borrow_mut().comment = Some("comment".to_string());
     dbg!(&node);
+    let color_scheme = ColorScheme::default();
     let node_str = node.to_colored_string_ext(
+        &color_scheme,
         NODE_NAME | NODE_DESC | NODE_SIZE | NODE_COMMENT,
         NODE_NAME | NODE_DESC | NODE_SIZE | NODE_COMMENT,
     );
