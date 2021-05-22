@@ -320,7 +320,18 @@ impl<'a, 'b> Cli<'a, 'b> {
             .subcommand(
                 SubCommand::with_name(CMD_STATUS)
                     .about(CMD_STATUS_TEXT)
-                    .arg(Cli::arg_db()),
+                    .arg(Cli::arg_db())
+                    .arg(
+                        Arg::with_name(KEY_IGNORE)
+                            .short(KEY_IGNORE_SHORT)
+                            .long(KEY_IGNORE_LONG)
+                            .help(KEY_IGNORE_HELP)
+                            //.value_names(&[KEY_IGNORE_FILE1, KEY_IGNORE_FILE2, KEY_IGNORE_FILE3])
+                            .takes_value(true)
+                            //.number_of_values(1)
+                            .multiple(true),
+                        //.min_values(1),
+                    ),
             )
             // rm
             .subcommand(
@@ -336,6 +347,14 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .takes_value(true),
                     )
                     .arg(Cli::arg_path()),
+            )
+            // mv
+            .subcommand(
+                SubCommand::with_name(CMD_MV)
+                    .about(CMD_MV_TEXT)
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_path()),
+                //.arg(DST),
             )
             // update
             .subcommand(

@@ -2,15 +2,16 @@ use crate::cli::constants::*;
 use clap::ArgMatches;
 use std::fmt;
 use std::path::{Path, PathBuf};
+use text_tree_elements::TextTreeElements;
 
 use crate::file_tree::{FileTree, Node, NODE_DEFAULT, NODE_NONE, SORT_DSC};
 use crate::file_tree::{
     NODE_ACCESSED, NODE_CHILDREN, NODE_CREATED, NODE_DESC, NODE_FILE_TYPE, NODE_MODIFIED,
-    NODE_NAME, NODE_SIZE, NODE_TAGS,
+    NODE_NAME, NODE_NOT_EXISTS, NODE_SIZE, NODE_TAGS,
 };
 use std::fs;
 
-/// Command structure
+/// Command structure, used to save user given arguments (CLI args)
 #[derive(Default, Debug)]
 pub struct Command {
     /// `-b, --database <DB>` Database path (default: `.tree.yml`)
@@ -118,11 +119,88 @@ impl Command {
         node.save(&self.db).unwrap();
     }
 
-    // show tracked/untracked/changed/removed paths/files
+    /// show tracked/untracked/changed/removed paths/files
     pub fn status(&mut self, matches: &ArgMatches) {
         self.get_args(&matches);
         self.debug_msg(CMD_STATUS);
+
+        // get db file path
+        if !self.db.exists() {
+            error!("db not exists");
+            return;
+        }
+
+        // get working dir
+        if !self.path.exists() {
+            error!("file or path not exists: {:?}", self.path);
+            return;
+        }
+
+        // init text tree elements, branch and link
+        let tree_elements = TextTreeElements::default();
+
+        // open db and compare with current state
+        if let Ok(mut node) = Node::load(&self.db) {
+            node.fill_compare_status(
+                None,
+                &self.path,
+                self.ignore.as_ref(),
+                NODE_NAME | NODE_SIZE,
+            )
+            .unwrap();
+            let rendered = node
+                .process_template(&tree_elements, 0, 0, node.children_num(), "")
+                .unwrap();
+            let rendered = rendered.join("");
+
+            // if output flag is given
+            // NOTE: not using is_present() bc. default value is set
+            //if matches.occurrences_of(KEY_OUTPUT) > 0 {
+            // export
+            //fs::write(&self.output, rendered.as_bytes()).unwrap();
+            // if no output flag is given
+            //} else {
+            // print
+            print!("{}", rendered);
+            //}
+        }
     }
+
+    //// show tracked/untracked/changed/removed paths/files
+    //pub fn status(&mut self, matches: &ArgMatches) {
+    //self.get_args(&matches);
+    //self.debug_msg(CMD_STATUS);
+
+    //// get db file path
+    //if !self.db.exists() {
+    //error!("db not exists");
+    //return;
+    //}
+
+    //let node =
+    ////Node::create_from_path_ext(&self.path, self.ignore.as_ref(), self.bitflag).unwrap();
+    //Node::create_from_path_ext(&self.path, self.ignore.as_ref(), NODE_NAME | NODE_SIZE).unwrap();
+    //// export
+    //if let Ok(origin) = Node::load(&self.db) {
+    //Self::comparerer(&node, &origin);
+    //let tree = Default::default();
+    //let rendered = node
+    //.process_template(&tree, 0, 0, node.children_num(), "", &origin)
+    //.unwrap();
+    //let mut rendered = rendered.join("");
+
+    //// if output flag is given
+    //// NOTE: not using is_present() bc. default value is set
+    //if matches.occurrences_of(KEY_OUTPUT) > 0 {
+    //// export
+    //fs::write(&self.output, rendered.as_bytes()).unwrap();
+    //// if no output flag is given
+    //} else {
+    //// print
+    //print!("{}", rendered);
+    //}
+    //}
+    //}
 
     // tree file, id, desc
     pub fn add(&mut self, matches: &ArgMatches) {
@@ -309,6 +387,7 @@ impl Command {
         }
     }
 
+    /// ls
     pub fn ls(&mut self, matches: &ArgMatches) {
         self.get_args(&matches);
         self.debug_msg(CMD_LS);
@@ -337,11 +416,16 @@ impl Command {
             return;
         }
 
+        let origin =
+            Node::create_from_path_ext(&self.path, self.ignore.as_ref(), self.bitflag).unwrap();
+
         // export
         if let Ok(node) = Node::load(&self.db) {
+            let tree = TextTreeElements::default();
             let rendered = node
-                .process_template(0, 0, node.children_num(), "", &self.template)
+                .process_template(&tree, 0, 0, node.children_num(), "")
                 .unwrap();
+            let rendered = rendered.join("");
 
             // if output flag is given
             // NOTE: not using is_present() bc. default value is set
@@ -449,10 +533,12 @@ impl Command {
         }
     }
 
+    /// print current command and it's args
     pub fn debug_msg(&self, cmd: &str) {
         debug!("command: {} args: {}", cmd, &self,);
     }
 
+    /// store user given options
     pub fn get_args(&mut self, matches: &ArgMatches) {
         // db file
         self.db = PathBuf::from(matches.value_of(KEY_DB).unwrap_or(DEFAULT_DB_FILENAME));
@@ -503,7 +589,7 @@ impl Command {
         };
     }
 
-    // match against command
+    /// match against command
     pub fn match_command(&mut self, matches: &ArgMatches) {
         match matches.subcommand() {
             (CMD_INIT, Some(matches)) => self.init(matches),

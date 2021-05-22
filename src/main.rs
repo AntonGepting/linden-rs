@@ -5,6 +5,8 @@ extern crate log4rs;
 #[macro_use]
 extern crate serde_derive;
 
+extern crate text_tree_elements;
+
 mod file_tree;
 
 mod application;

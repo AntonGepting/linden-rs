@@ -146,6 +146,48 @@ fn get() {
     dbg!(root.get_child("a"));
 }
 
+// get path and full path of current node
+#[test]
+fn get_path() {
+    use crate::file_tree::Node;
+    use std::path::Path;
+    use std::rc::Rc;
+
+    let root = Node::to_node(Node::new(".", None));
+    let child1 = Node::new("a", None);
+    let child2 = Node::new("b", None);
+    let child3 = Node::new("c", None);
+
+    root.add_child(child1);
+    root.add_child(child2);
+    root.add_child(child3);
+
+    let target = root.get("./c").unwrap();
+
+    let path = Node::get_path(&target.borrow());
+    assert_eq!(path, Path::new("."));
+
+    let full_path = Node::get_full_path(&target.borrow());
+    assert_eq!(full_path, Path::new("./c"));
+}
+
+// colored output of changes in file
+#[test]
+fn to_colored_string_ext() {
+    use crate::file_tree::{Node, NODE_COMMENT, NODE_DESC, NODE_NAME, NODE_SIZE};
+
+    let mut node = Node::to_node(Node::new("test_node.ext", None));
+    node.borrow_mut().size = Some(10);
+    node.borrow_mut().desc = Some("description".to_string());
+    node.borrow_mut().comment = Some("comment".to_string());
+    dbg!(&node);
+    let node_str = node.to_colored_string_ext(
+        NODE_NAME | NODE_DESC | NODE_SIZE | NODE_COMMENT,
+        NODE_NAME | NODE_DESC | NODE_SIZE | NODE_COMMENT,
+    );
+    println!("note_str: {}", node_str);
+}
+
 //#[test]
 //fn print_in_line() {
 //use crate::node::node::Node;

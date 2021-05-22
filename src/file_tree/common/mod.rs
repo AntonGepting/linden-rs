@@ -3,6 +3,7 @@ pub mod file_type;
 //pub use file_type::FileType;
 
 // XXX: alphabetical?
+// info from filesystem
 pub const NODE_NAME: usize = 1;
 pub const NODE_SHA256: usize = 1 << 1;
 pub const NODE_STATUS: usize = 1 << 2;
@@ -15,10 +16,18 @@ pub const NODE_CHILDREN: usize = 1 << 8;
 //pub const NODE_COMPARE: usize = 1 << 9;
 pub const NODE_FULL_PATH: usize = 1 << 10;
 
+// info from user
 pub const NODE_DESC: usize = 1 << 11;
 pub const NODE_TAGS: usize = 1 << 12;
 pub const NODE_COMMENT: usize = 1 << 13;
 pub const NODE_HIDDEN: usize = 1 << 14;
+
+// other info
+pub const NODE_NOT_EXISTS: usize = 1 << 15;
+//pub const NODE_NEW: usize = 1 << 16;
+pub const NODE_UNTRACKED: usize = 1 << 16;
+//pub const NODE_REMOVED: usize = 1 << 16;
+//pub const NODE_CHANGED: usize = 1 << 16;
 
 pub const SORT_ASC: usize = 1 << 23;
 pub const SORT_DSC: usize = 1 << 24;
@@ -66,6 +75,8 @@ pub const NODE_OPTIONALS: usize = NODE_DESC
     | NODE_FILE_TYPE
     //| NODE_COMPARE
     | NODE_TAGS;
+
+pub const NODE_BASICS: usize = NODE_NAME | NODE_SIZE;
 
 pub const NODE_DYNAMICS: usize =
     NODE_SHA256 | NODE_MODIFIED | NODE_ACCESSED | NODE_CREATED | NODE_SIZE;

@@ -16,3 +16,4 @@ serde = "*"
 #serde_json = "*"
 serde_derive = "*"
 serde_yaml = "*"
+text_tree_elements = { path = "../text-tree-elements" }

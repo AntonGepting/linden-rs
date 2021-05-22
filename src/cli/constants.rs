@@ -47,12 +47,15 @@ pub const CMD_INIT_TEXT: &str = "initialize file tree";
 // edit [-b <DB>]
 pub const CMD_EDIT: &str = "edit";
 pub const CMD_EDIT_TEXT: &str = "edit file node";
+
 // read [-b <DB>]
 pub const CMD_READ: &str = "read";
 pub const CMD_READ_TEXT: &str = "read file node";
+
 // print [-b <DB>]
-pub const CMD_PRINT: &str = "export";
+pub const CMD_PRINT: &str = "print";
 pub const CMD_PRINT_TEXT: &str = "print tree";
+
 // delete [-b <DB>] <FILE> [-sdamcst]
 /// rm [-b <DB>] [PATH] [-r]
 ///  -b, --database <DB> DB file path
@@ -60,8 +63,13 @@ pub const CMD_PRINT_TEXT: &str = "print tree";
 ///  -r, --recursive
 pub const CMD_RM: &str = "rm";
 pub const CMD_RM_TEXT: &str = "remove file node";
-// print [-b <DB>]
-pub const CMD_PRINT_META: &str = "print";
+
+// mv [-b <DB>] [PATH]
+pub const CMD_MV: &str = "mv";
+pub const CMD_MV_TEXT: &str = "move file node";
+
+// print-meta [-b <DB>]
+pub const CMD_PRINT_META: &str = "print-meta";
 pub const CMD_PRINT_META_TEXT: &str = "print tree meta information";
 
 /// status [-b <DB>]

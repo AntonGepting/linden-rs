@@ -1,11 +1,13 @@
+// TODO: split in tree and node
 //#![forbid(unsafe_code)]
 //#![warn(missing_docs)]
 
+use crate::cli::color::TerminalColor;
 use crate::file_tree::{Error, FileTree, FileType, TreeEntry};
 use crate::file_tree::{
     NODE_ACCESSED, NODE_ALL, NODE_CHILDREN, NODE_COMMENT, NODE_CREATED, NODE_DEFAULT, NODE_DESC,
-    NODE_FILE_TYPE, NODE_MODIFIED, NODE_NAME, NODE_NONE, NODE_SHA256, NODE_SIZE, NODE_STATUS,
-    NODE_TAGS, SORT_ASC,
+    NODE_FILE_TYPE, NODE_MODIFIED, NODE_NAME, NODE_NONE, NODE_NOT_EXISTS, NODE_SHA256, NODE_SIZE,
+    NODE_STATUS, NODE_TAGS, NODE_UNTRACKED, SORT_ASC,
 };
 use chrono::offset::Utc;
 use chrono::DateTime;
@@ -16,18 +18,46 @@ use std::fs;
 use std::fs::DirEntry;
 use std::path::{Component, Path, PathBuf};
 use std::rc::{Rc, Weak};
+use text_tree_elements::TextTreeElements;
 
 /// default/child pointer
 pub type NodeRc = Rc<RefCell<NodeData>>;
 /// parent pointer
 pub type NodeWeak = Weak<RefCell<NodeData>>;
 
-/// newtype wrapper
+/// color scheme struct for colored strings output
+pub struct ColorScheme {
+    /// node changed
+    pub changed: TerminalColor,
+    /// node changed
+    pub removed: TerminalColor,
+    /// node changed
+    pub untracked: TerminalColor,
+    /// standard
+    pub standard: TerminalColor,
+    /// default
+    pub default: TerminalColor,
+}
+
+impl Default for ColorScheme {
+    fn default() -> Self {
+        ColorScheme {
+            changed: TerminalColor::Yellow,
+            removed: TerminalColor::Red,
+            untracked: TerminalColor::Blue,
+            standard: TerminalColor::Green,
+            default: TerminalColor::Default,
+        }
+    }
+}
+
+/// newtype wrapper, bc there is a need to imp methods for this type (for NodeRc impossible)
 #[derive(Debug, Clone, Default)]
 pub struct Node(pub NodeRc);
 
 // XXX: mb ignore in every node?
 /// main structure holding data
+///  NodeRc is needed to avoid recursive pointers
 #[derive(Debug, Clone, Default)]
 pub struct NodeData {
     /// file/directory/symlink name
@@ -43,7 +73,7 @@ pub struct NodeData {
     pub tags: Option<Vec<String>>,
     /// sha256 hash
     pub sha256: Option<String>,
-    /// ?
+    /// comparation status
     pub status: Option<usize>,
     /// last modification date time
     pub modified: Option<String>,
@@ -67,6 +97,8 @@ pub struct NodeData {
     pub comment: Option<String>,
 }
 
+// XXX: think about return same type for all fn's returning Node, then maybe unwrap Rc? Same work
+// for all such functions
 impl Node {
     /// add child, create children vec if not exist (for first child)
     pub fn add_child(&self, child: NodeRc) {
@@ -85,6 +117,7 @@ impl Node {
         }
     }
 
+    /// get weak pointer
     pub fn to_weak(node: &Node) -> NodeWeak {
         Rc::downgrade(&node.0)
     }
@@ -122,11 +155,8 @@ impl Node {
             let dir_entry = read_dir?;
 
             // skip if in ignore list, mb list paths?
-            let name = dir_entry.file_name().into_string().unwrap();
-            if let Some(ref ignore_vec) = ignore {
-                if ignore_vec.contains(&name) {
-                    continue;
-                }
+            if Self::is_ignore(&dir_entry, ignore) {
+                continue;
             }
 
             // create and fill entry
@@ -143,6 +173,81 @@ impl Node {
 
             self.add_child(node_rc);
         }
+        Ok(())
+    }
+
+    // is DirEntry in ignore list
+    pub fn is_ignore(dir_entry: &DirEntry, ignore: Option<&Vec<String>>) -> bool {
+        // skip if in ignore list, mb list paths?
+        let name = dir_entry.file_name().into_string().unwrap();
+        if let Some(ref ignore_vec) = ignore {
+            if ignore_vec.contains(&name) {
+                return true;
+            }
+        }
+        false
+    }
+
+    //pub fn merge_preview<P: AsRef<Path>>(
+
+    // merge curretn file tree with dir
+    //  add not existing nodes, set state
+    //  set state for existing
+    //
+    // XXX: not from file, but from struct is better?
+    pub fn fill_compare_status<P: AsRef<Path>>(
+        &mut self,
+        parent: Option<NodeWeak>,
+        dir: P,
+        ignore: Option<&Vec<String>>,
+        bitflag: usize,
+    ) -> Result<(), Error> {
+        // XXX: absolete path
+        //self.file = fs::canonicalize(&dir).unwrap().to_str().unwrap().to_string();
+
+        // XXX: sorted_read_dir()
+        for read_dir in fs::read_dir(dir)? {
+            let dir_entry = read_dir?;
+
+            // exists in ignore list
+            if Self::is_ignore(&dir_entry, ignore) {
+                continue;
+            }
+
+            // create and fill entry
+            let node_rc = Node::from_dir_entry_ext(parent.clone(), &dir_entry, bitflag);
+            let node_weak = Rc::downgrade(&node_rc);
+
+            //let node = node_rc.borrow()
+            let path = dir_entry.path();
+
+            // if file already exists in db
+            if let Some(mut node) = self.get_child(dir_entry.file_name()) {
+                // if dir => process it's children before save node
+                if path.is_dir() {
+                    //let node_data = node.borrow();
+                    node.fill_compare_status(parent.clone(), &path, ignore, bitflag)?;
+                    // dir and not exists
+                }
+
+                node.borrow_mut().status = Some(Node(node_rc).compare_ext(&node, bitflag));
+
+            // if not exists in db
+            } else {
+                if path.is_dir() {
+                    Node(Rc::clone(&node_rc)).fill_compare_status(
+                        Some(node_weak),
+                        &path,
+                        ignore,
+                        bitflag,
+                    )?;
+                }
+
+                node_rc.borrow_mut().status = Some(NODE_UNTRACKED);
+                self.add_child(node_rc);
+            }
+        }
+
         Ok(())
     }
 
@@ -259,63 +364,77 @@ impl Node {
     // XXX: add default as argument?
     // XXX: add heuristic compare fn
     // XXX: tags
-    pub fn compare(&self, origin: &Node) -> bool {
-        let node = self.borrow();
-        let origin = origin.borrow();
-
-        let compare = node.compare.unwrap_or(NODE_DEFAULT);
-
-        if (compare & NODE_NAME) == NODE_NAME {
-            if node.file == origin.file {
-                return true;
-            }
-        }
-        if (compare & NODE_SHA256) == NODE_SHA256 {
-            if node.sha256 == origin.sha256 {
-                return true;
-            }
-        }
-        false
+    pub fn compare(&self, origin: &Node) -> usize {
+        self.compare_ext(origin, NODE_DEFAULT)
     }
 
+    // XXX: None == None?
     // XXX: time older younger?
     // XXX: tags
     //
-    // returns what fields are different
-    pub fn compare_ext(&self, origin: &Node) -> usize {
-        let mut bitflag = NODE_NONE;
+    /// compare selected fields of two nodes and return bitflag of differences
+    /// compare nodes, returns what fields are different
+    ///
+    /// return: NODE_NODE - no changes
+    ///         NODE_* - detected changes
+    pub fn compare_ext(&self, origin: &Node, bitflag: usize) -> usize {
+        let mut result = NODE_NONE;
 
         let node = self.borrow();
         let origin = origin.borrow();
 
-        if node.file != origin.file {
-            bitflag |= NODE_NAME;
+        if (bitflag & NODE_NAME) > 0 {
+            if node.file != origin.file {
+                result |= NODE_NAME;
+            }
         }
-        if node.desc != origin.desc {
-            bitflag |= NODE_DESC;
+        if (bitflag & NODE_DESC) > 0 {
+            if node.desc != origin.desc {
+                result |= NODE_DESC;
+            }
         }
-        if node.sha256 != origin.sha256 {
-            bitflag |= NODE_SHA256;
+        if (bitflag & NODE_TAGS) > 0 {
+            if node.tags != origin.tags {
+                result |= NODE_TAGS;
+            }
         }
-        if node.modified != origin.modified {
-            bitflag |= NODE_MODIFIED;
+        if (bitflag & NODE_SHA256) > 0 {
+            if node.sha256 != origin.sha256 {
+                result |= NODE_SHA256;
+            }
         }
-        if node.accessed != origin.accessed {
-            bitflag |= NODE_ACCESSED;
+        if (bitflag & NODE_STATUS) > 0 {
+            if node.status != origin.status {
+                result |= NODE_STATUS;
+            }
         }
-        if node.created != origin.created {
-            bitflag |= NODE_CREATED;
+        if (bitflag & NODE_MODIFIED) > 0 {
+            if node.modified != origin.modified {
+                result |= NODE_MODIFIED;
+            }
         }
-        if node.size != origin.size {
-            bitflag |= NODE_SIZE;
+        if (bitflag & NODE_ACCESSED) > 0 {
+            if node.accessed != origin.accessed {
+                result |= NODE_ACCESSED;
+            }
         }
-        if node.file_type != origin.file_type {
-            bitflag |= NODE_FILE_TYPE;
+        if (bitflag & NODE_CREATED) > 0 {
+            if node.created != origin.created {
+                result |= NODE_CREATED;
+            }
         }
-        if node.tags != origin.tags {
-            bitflag |= NODE_TAGS;
+        if (bitflag & NODE_SIZE) > 0 {
+            if node.size != origin.size {
+                result |= NODE_SIZE;
+            }
         }
-        bitflag
+        if (bitflag & NODE_FILE_TYPE) > 0 {
+            if node.file_type != origin.file_type {
+                result |= NODE_FILE_TYPE;
+            }
+        }
+
+        result
     }
 
     // XXX: -1?
@@ -409,6 +528,23 @@ impl Node {
             }
         }
     }
+
+    //pub fn for_all2(
+    //&self,
+    //level: usize,
+    //current_idx: usize,
+    //size: usize,
+    //path
+    //cb: &dyn Fn(&Self, usize, usize, usize),
+    //) {
+    //cb(&self, level, current_idx, size);
+    //if let Some(children) = &self.0.borrow().children {
+    //for (i, child) in children.iter().enumerate() {
+    //// XXX ?
+    //child.for_all(level + 1, i, children.len(), cb);
+    //}
+    //}
+    //}
 
     pub fn sort_ext(&self, bitflag: usize) {
         if let Some(ref mut children) = self.borrow_mut().children {
@@ -605,17 +741,17 @@ impl Node {
         });
     }
 
-    // borrow() wrapper
+    /// borrow() wrapper
     pub fn borrow(&self) -> Ref<NodeData> {
         self.0.borrow()
     }
 
-    // borrow_mut() wrapper
+    /// borrow_mut() wrapper
     pub fn borrow_mut(&self) -> RefMut<NodeData> {
         self.0.borrow_mut()
     }
 
-    // get full path and file name of entry
+    /// get full path and file name of entry
     pub fn get_full_path(this: &NodeData) -> PathBuf {
         let mut path = Node::get_path(&this);
         path.push(&this.file);
@@ -640,9 +776,8 @@ impl Node {
         //.and_then(|parent| parent.upgrade())
     }
 
-    // get full path using parents fields excluding file name for given entry
-    //
     // XXX: follow symlinks?
+    /// get full path using parents fields excluding file name for given entry
     pub fn get_path(this: &NodeData) -> PathBuf {
         let mut path = PathBuf::new();
         if let Some(parent) = &this.parent {
@@ -654,26 +789,6 @@ impl Node {
         path
     }
 
-    pub fn get_tabs(
-        level: usize,
-        current: usize,
-        len: usize,
-        tab_template: [&str; 3],
-        link_template: [&str; 3],
-    ) -> (String, String) {
-        let (tab, link) = if level == 0 {
-            // first -> no tab, no branch
-            (tab_template[0], link_template[0])
-        } else if current == len - 1 {
-            // last -> tab + single last branch
-            (tab_template[2], link_template[2])
-        } else {
-            // regular -> parent link + double branch (current & next item)
-            (tab_template[1], link_template[1])
-        };
-        (tab.to_string(), link.to_string())
-    }
-
     pub fn has_children(&self) -> bool {
         self.borrow().children.is_some()
     }
@@ -681,6 +796,8 @@ impl Node {
     pub fn ls(&self, path: &Path) -> Result<(), Error> {
         let s = self.to_string_ext(NODE_DEFAULT);
         println!("{}", s);
+        //let curr_path = Node::get_full_path(&self.borrow());
+        //let curr_path_str = curr_path.to_str().unwrap();
         self.for_children(path, &|child, _i, _size| {
             //let s = child.to_string_ext(COMPARE_DEFAULT);
             //println!("{}", s);
@@ -704,9 +821,10 @@ impl Node {
     pub fn print_for_all(&self) {
         self.for_all(0, 0, self.children_num(), &|entry, level, idx, size| {
             let s = entry.to_string_ext(NODE_NAME | NODE_DESC);
-            let (tab, link) =
-                Node::get_tabs(level, idx, size, ["", "│  ", "   "], ["", "├─ ", "└─ "]);
-            println!("{}{}{}", tab, link, s);
+            //let (tab, link) =
+            //TextTree::get_tabs(level, idx, size, "", ["", "│  ", "   "], ["", "├─ ", "└─ "]);
+
+            //println!("{}{}{}", tab, link, s);
             //println!("{} {} {} {:?} {:?}", level, idx, size, name, body.size);
         });
     }
@@ -726,6 +844,25 @@ impl Node {
         });
     }
 
+    // XXX: mb move to tree? tree and origin tree
+    /// find using giving template node (same path will be used), and compare nodes
+    ///
+    /// Returns:
+    /// * `NODE_NOT_EXISTS` - if template node path not found in current node tree
+    /// * `NODE_*` - comparsion result, bitmask of differences between them
+    pub fn find_and_compare_ext(&self, template: &Node, bitflag: usize) -> usize {
+        let path = Node::get_full_path(&template.borrow());
+        if let Some(node) = &self.get(&path) {
+            node.compare_ext(&template, bitflag)
+        } else {
+            NODE_NOT_EXISTS
+        }
+    }
+
+    pub fn find_and_compare(&self, template: &Node) -> usize {
+        self.find_and_compare_ext(template, NODE_DEFAULT)
+    }
+
     // TODO: empty body
     //
     // XXX: last refactor levels_num
@@ -733,48 +870,82 @@ impl Node {
     // current_index
     pub fn process_template(
         &self,
+        text_tree_elements: &TextTreeElements,
         level: usize,
-        idx: usize,
+        index: usize,
         size: usize,
-        tabs: &str,
-        template: &Path,
-    ) -> Option<String> {
-        //use tera::Context;
-        //use tera::Tera;
+        prefixes: &str,
+    ) -> Option<Vec<String>> {
+        let mut v = Vec::new();
 
-        //let mut tera = Tera::default();
-        //let mut tera = Tera::new(template.to_str().unwrap()).unwrap();
-        //tera.add_template_file(template, None).unwrap();
+        // get brahch text, node string and store these
+        let (prefix, branch) = text_tree_elements.get_prefix_branch(level, index, size);
+        let entry_str = self.to_colored_string(NODE_NAME | NODE_SIZE | NODE_DESC);
+        //let entry_str = self.to_string_ext(NODE_NAME | NODE_SIZE | NODE_DESC);
+        v.push(format!("{}{}{}\n", prefixes, branch, entry_str));
 
-        //let mut context = Context::new();
-        //context.insert("entry", &self);
+        // update prefixes, append current prefix
+        let prefixes = format!("{}{}", prefixes, prefix);
 
-        // render entry
-        //let entry_str = tera.render(&template.to_str().unwrap(), &context).unwrap();
-        let entry_str = self.to_string_ext(NODE_NAME | NODE_DESC | NODE_TAGS);
-        let (tab, link) = Node::get_tabs(level, idx, size, ["", "│  ", "   "], ["", "├─ ", "└─ "]);
-        let mut render = format!("{}{}\n", link, entry_str);
-        let tabs = format!("{}{}", tabs, tab);
-
-        // render children
+        // process children
         if let Some(children) = &self.borrow().children {
-            // calculating tabs
-
-            //entry_str = format!("├{}", render);
-            let mut children_acc = "".to_string();
+            let size = children.len();
             for (i, child) in children.iter().enumerate() {
-                if let Some(child_str) =
-                    child.process_template(level + 1, i, children.len(), &tabs, template)
+                if let Some(mut c) =
+                    child.process_template(text_tree_elements, level + 1, i, size, &prefixes)
                 {
-                    //render = format!("{}{}{}", render, tab, child_str);
-                    children_acc = format!("{}{}{}", children_acc, tabs, child_str);
+                    v.append(&mut c);
                 }
             }
-            render = format!("{}{}", render, children_acc);
         }
-        //println!("{}", render);
-        Some(render)
+
+        Some(v)
     }
+
+    // TODO: empty body
+    //
+    // XXX: last refactor levels_num
+    // XXX: open template every iteration?
+    // current_index
+    //pub fn process_template(
+    //&self,
+    //text_tree_elements: &TextTreeElements,
+    //level: usize,
+    //index: usize,
+    //size: usize,
+    //prefixes: &str,
+    //origin: &Node,
+    //) -> Option<Vec<String>> {
+    //let mut v = Vec::new();
+
+    //// get brahch text
+    //let (prefix, branch) = text_tree_elements.get_prefix_branch(level, index, size);
+    //let changes = origin.find_and_compare_ext(&self, NODE_NAME | NODE_SIZE);
+    //let color_scheme = ColorScheme::default();
+    //let entry_str = self.to_colored_string_ext(&color_scheme, NODE_NAME | NODE_SIZE, changes);
+    //v.push(format!("{}{}{}\n", prefixes, branch, entry_str));
+
+    //let prefixes = format!("{}{}", prefixes, prefix);
+
+    //// process children
+    //if let Some(children) = &self.borrow().children {
+    //let size = children.len();
+    //for (i, child) in children.iter().enumerate() {
+    //if let Some(mut c) = child.process_template(
+    //text_tree_elements,
+    //level + 1,
+    //i,
+    //size,
+    //&prefixes,
+    //origin,
+    //) {
+    //v.append(&mut c);
+    //}
+    //}
+    //}
+
+    //Some(v)
+    //}
 
     // TODO: write it
     // XXX: Option
@@ -790,68 +961,235 @@ impl Node {
         })
     }
 
+    /// set parent field
     pub fn set_parent(&self, parent: NodeWeak) {
         self.borrow_mut().parent = Some(parent);
     }
 
+    // XXX: vec with keywords and output like tmux
+    /// convert to string user giving fields
     pub fn to_string_ext(&self, bitflag: usize) -> String {
-        let mut s = "".to_string();
+        let mut v = Vec::new();
+
         let node = self.borrow();
+
         if (bitflag & NODE_NAME) > 0 {
-            //s = format!("{}{:50} ", s, name);
-            s = format!(
-                "{}{} ",
-                s,
-                &self.borrow().file.clone().into_string().unwrap()
-            );
+            v.push(self.borrow().file.clone().into_string().unwrap());
         }
+
         if (bitflag & NODE_DESC) > 0 {
             if let Some(desc) = &node.desc {
-                s = format!("{}\"{}\" ", s, desc);
+                v.push(format!("\"{}\"", desc));
             }
         }
+
         if (bitflag & NODE_SHA256) > 0 {
             if let Some(sha256) = &node.sha256 {
-                s = format!("{}{} ", s, sha256);
+                v.push(sha256.to_string());
             }
         }
+
         if (bitflag & NODE_STATUS) > 0 {
             if let Some(status) = &node.status {
-                s = format!("{}{} ", s, status);
+                v.push(status.to_string());
             }
         }
+
         if (bitflag & NODE_MODIFIED) > 0 {
             if let Some(modified) = &node.modified {
-                s = format!("{}{} ", s, modified);
+                v.push(modified.to_string());
             }
         }
+
         if (bitflag & NODE_ACCESSED) > 0 {
             if let Some(accessed) = &node.accessed {
-                s = format!("{}{} ", s, accessed);
+                v.push(accessed.to_string());
             }
         }
+
         if (bitflag & NODE_CREATED) > 0 {
             if let Some(created) = &node.created {
-                s = format!("{}{} ", s, created);
+                v.push(created.to_string());
             }
         }
+
         if (bitflag & NODE_SIZE) > 0 {
             if let Some(size) = &node.size {
-                s = format!("{}{} ", s, size);
+                v.push(size.to_string());
             }
         }
+
         if (bitflag & NODE_FILE_TYPE) > 0 {
             if let Some(file_type) = &node.file_type {
-                s = format!("{}{} ", s, file_type);
+                v.push(file_type.to_string());
             }
         }
+
         // TODO: print
         if (bitflag & NODE_TAGS) > 0 {
-            if let Some(tags) = &node.tags {
-                s = format!("{} {:?}", s, tags);
+            unimplemented!();
+            //if let Some(tags) = &node.tags {
+            //v.push(tags.to_string());
+            //}
+        }
+
+        v.join(" ")
+    }
+
+    //
+    //pub fn for_fields(f: FnOnce)
+    //{
+    //if (bitflag & NODE_DESC) > 0 {
+    //}
+    //}
+
+    //// XXX: if any changes yellow, removed red, new blue
+    //pub fn to_colored_string(&self, fields = default) -> String {
+
+    // same as to_colored_string_ext version, but uses node's status field as changes bitflags
+    // XXX: rename
+    pub fn to_colored_string(&self, fields_bitflag: usize) -> String {
+        let status = self.borrow().status.unwrap_or(NODE_NOT_EXISTS);
+        //println!("status: {}", &status);
+        let color_scheme = ColorScheme::default();
+        self.to_colored_string_ext(&color_scheme, fields_bitflag, status)
+    }
+
+    //pub fn from_color_scheme(color_scheme: &ColorScheme, bitflag: usize) -> TerminalColor {
+    //if changes_bitflag == NODE_UNTRACKED {
+    //} else changes_bitflag ==  {
+    //}
+    //}
+
+    /// convert selected fields of node to colored string, using changes bitflags
+    // TODO: colorscheme
+    // NOTE: mb. if nodes compared color must be set, if untached default color, not set
+    pub fn to_colored_string_ext(
+        &self,
+        color_scheme: &ColorScheme,
+        fields_bitflag: usize,
+        changes_bitflag: usize,
+    ) -> String {
+        let mut v = Vec::new();
+
+        let node = self.borrow();
+
+        if (fields_bitflag & NODE_NAME) > 0 {
+            // XXX: get node name fn
+            let mut name = node.clone().file.into_string().unwrap();
+            // XXX: mb local var for color all elements
+            if (changes_bitflag & NODE_UNTRACKED) > 0 {
+                name = TerminalColor::colorize(&name, &color_scheme.untracked);
+            } else if changes_bitflag == NODE_NOT_EXISTS {
+                name = TerminalColor::colorize(&name, &color_scheme.removed);
+            } else if changes_bitflag != NODE_NONE {
+                name = TerminalColor::colorize(&name, &color_scheme.changed);
+            } else if changes_bitflag == NODE_NONE {
+                name = TerminalColor::colorize(&name, &color_scheme.standard);
+            }
+            v.push(name);
+        }
+
+        //if (fields_bitflag & NODE_NAME) > 0 {
+        //// XXX: get node name fn
+        //let mut name = node.clone().file.into_string().unwrap();
+        //if (changes_bitflag & NODE_NAME) > 0 {
+        //name = TerminalColor::colorize(&name, &color);
+        //}
+        //v.push(name);
+        //}
+
+        if (fields_bitflag & NODE_DESC) > 0 {
+            if let Some(desc) = &node.desc {
+                let mut desc = String::from(desc);
+                if (changes_bitflag & NODE_DESC) > 0 {
+                    desc = TerminalColor::colorize(&desc, &color_scheme.changed);
+                }
+                v.push(desc);
             }
         }
-        s
+
+        if (fields_bitflag & NODE_SHA256) > 0 {
+            if let Some(sha256) = &node.sha256 {
+                let mut sha256 = String::from(sha256);
+                if (changes_bitflag & NODE_SHA256) > 0 {
+                    sha256 = TerminalColor::colorize(&sha256, &color_scheme.changed);
+                }
+                v.push(sha256);
+            }
+        }
+
+        if (fields_bitflag & NODE_MODIFIED) > 0 {
+            if let Some(modified) = &node.modified {
+                let mut modified = modified.to_string();
+                if (changes_bitflag & NODE_MODIFIED) > 0 {
+                    modified = TerminalColor::colorize(&modified, &color_scheme.changed);
+                }
+                v.push(modified);
+            }
+        }
+
+        if (fields_bitflag & NODE_ACCESSED) > 0 {
+            if let Some(accessed) = &node.accessed {
+                let mut accessed = accessed.to_string();
+                if (changes_bitflag & NODE_ACCESSED) > 0 {
+                    accessed = TerminalColor::colorize(&accessed, &color_scheme.changed);
+                }
+                v.push(accessed);
+            }
+        }
+
+        if (fields_bitflag & NODE_CREATED) > 0 {
+            if let Some(created) = &node.created {
+                let mut created = created.to_string();
+                if (changes_bitflag & NODE_CREATED) > 0 {
+                    created = TerminalColor::colorize(&created, &color_scheme.changed);
+                }
+                v.push(created);
+            }
+        }
+
+        if (fields_bitflag & NODE_SIZE) > 0 {
+            if let Some(size) = &node.size {
+                let mut size = size.to_string();
+                if (changes_bitflag & NODE_SIZE) > 0 {
+                    size = TerminalColor::colorize(&size, &color_scheme.changed);
+                }
+                v.push(size);
+            }
+        }
+
+        if (fields_bitflag & NODE_FILE_TYPE) > 0 {
+            if let Some(file_type) = &node.file_type {
+                let mut file_type = file_type.to_string();
+                if (changes_bitflag & NODE_FILE_TYPE) > 0 {
+                    file_type = TerminalColor::colorize(&file_type, &color_scheme.changed);
+                }
+                v.push(file_type);
+            }
+        }
+
+        //if (fields_bitflag & NODE_TAGS) > 0 {
+        //if let Some(tags) = &node.tags {
+        //let mut tags = tags.to_string();
+        //if (changes_bitflag & NODE_TAGS) > 0 {
+        //tags = TerminalColor::colorize(&tags, &color);
+        //}
+        //v.push(tags);
+        //}
+        //}
+
+        if (fields_bitflag & NODE_COMMENT) > 0 {
+            if let Some(comment) = &node.comment {
+                let mut comment = comment.to_string();
+                if (changes_bitflag & NODE_COMMENT) > 0 {
+                    comment = TerminalColor::colorize(&comment, &color_scheme.changed);
+                }
+                v.push(comment);
+            }
+        }
+
+        v.join(" ")
     }
 
     // XXX: rename copy?
@@ -1026,3 +1364,16 @@ impl From<&DirEntry> for Node {
 // NOTE: impossible, parent arg is missing
 //impl From<&TreeEntry> for Node {
 //fn from(entry: &TreeEntry) -> Self {
+
+//pub struct NodeIterator {
+//pub previous: Option<Node>,
+//pub next: Option<Node>,
+//}
+
+//impl Iterator for NodeIterator {
+//type Item = Node;
+
+//fn next(&mut self) -> Option<Node> {
+//self.previous.to_owned()
+//}
+//}
