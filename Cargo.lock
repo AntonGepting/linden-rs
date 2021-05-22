@@ -532,6 +532,7 @@ dependencies = [
 [[package]]
 name = "text_tree_elements"
 version = "0.1.0"
+source = "git+https://github.com/AntonGepting/text-tree-elements-rs?branch=dev#59d004adebbdfaf17f5dd21c3d927093c2b80a33"
 
 [[package]]
 name = "textwrap"

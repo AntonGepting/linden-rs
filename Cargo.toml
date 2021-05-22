@@ -16,4 +16,6 @@ serde = "*"
 #serde_json = "*"
 serde_derive = "*"
 serde_yaml = "*"
-text_tree_elements = { path = "../text-tree-elements" }
+#text_tree_elements = { path = "../text-tree-elements" }
+text_tree_elements = { git = "https://github.com/AntonGepting/text-tree-elements-rs", branch = "dev" }
+
