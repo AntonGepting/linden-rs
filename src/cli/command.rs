@@ -4,7 +4,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use text_tree_elements::TextTreeElements;
 
-use crate::file_tree::{FileTree, Node, NODE_DEFAULT, NODE_NONE, SORT_DSC};
+use crate::file_tree::{FileTree, FileType, Node, NodeData, NODE_DEFAULT, NODE_NONE, SORT_DSC};
 use crate::file_tree::{
     NODE_ACCESSED, NODE_CHILDREN, NODE_CREATED, NODE_DESC, NODE_FILE_TYPE, NODE_MODIFIED,
     NODE_NAME, NODE_NOT_EXISTS, NODE_SIZE, NODE_TAGS,
@@ -18,6 +18,10 @@ pub struct Command {
     pub db: PathBuf,
     /// `[PATH]` Target directory/file path (default: `.`)
     pub path: PathBuf,
+    /// `[SOURCE]` Source directory/file path
+    pub source: PathBuf,
+    /// `[DESTINATION]` Target directory/file path
+    pub destination: PathBuf,
     /// `-o, --output <OUTPUT>` Output file path
     pub output: PathBuf,
     /// `-t, --template` Template file path
@@ -32,6 +36,9 @@ pub struct Command {
     pub recursive: bool,
     ///
     pub tags: Option<Vec<String>>,
+
+    // store use user given fields
+    pub node_data: Option<NodeData>,
 }
 
 impl fmt::Display for Command {
@@ -86,12 +93,54 @@ impl Command {
         if matches.is_present(KEY_BITFLAG_CHILDREN) {
             bitflag |= NODE_CHILDREN;
         };
+        if matches.is_present(KEY_BITFLAG_COMMENT) {
+            bitflag |= NODE_COMMENT;
+        };
 
         if bitflag != NODE_NONE {
             Some(bitflag)
         } else {
             None
         }
+    }
+
+    /// get user given node properties
+    pub fn get_node_data(&mut self, matches: &ArgMatches) {
+        let mut node_data: NodeData = Default::default();
+        //node_data.name = PathBuf::from(matches.value_of(KEY_BITFLAG_NAME).unwrap_or(DEFAULT_DB_FILENAME));
+        //
+        //node_data.name = matches
+        //.value_of(KEY_BITFLAG_SIZE)
+        //.and_then(|s| s.parse::<u64>().ok());
+        node_data.desc = matches
+            .value_of(KEY_BITFLAG_DESC)
+            .and_then(|s| Some(s.to_string()));
+        node_data.accessed = matches
+            .value_of(KEY_BITFLAG_ACCESSED)
+            .and_then(|s| Some(s.to_string()));
+        node_data.modified = matches
+            .value_of(KEY_BITFLAG_MODIFIED)
+            .and_then(|s| Some(s.to_string()));
+        node_data.created = matches
+            .value_of(KEY_BITFLAG_CREATED)
+            .and_then(|s| Some(s.to_string()));
+        node_data.size = matches
+            .value_of(KEY_BITFLAG_SIZE)
+            .and_then(|s| s.parse::<u64>().ok());
+        node_data.file_type = matches
+            .value_of(KEY_BITFLAG_FILE_TYPE)
+            .and_then(|s| s.parse::<FileType>().ok());
+        //node_data.tags = matches
+        //.value_of(KEY_BITFLAG_TAGS)
+        //.and_then(|s| s.parse::<u64>().ok());
+        //node_data.children = matches
+        //.value_of(KEY_BITFLAG_CHILDREN)
+        //.and_then(|s| s.parse::<u64>().ok());
+        node_data.comment = matches
+            .value_of(KEY_BITFLAG_COMMENT)
+            .and_then(|s| Some(s.to_string()));
+
+        self.node_data = Some(node_data);
     }
 
     // XXX: functions getting parameters already converted from strings in acceptable format?
@@ -220,7 +269,7 @@ impl Command {
         }
 
         // db open successed?
-        if let Ok(mut node) = Node::load(&self.db) {
+        if let Ok(node) = Node::load(&self.db) {
             if node.exists(&self.path) {
                 error!("file or path is already tracking");
                 return;
@@ -304,19 +353,6 @@ impl Command {
         unimplemented!();
     }
 
-    pub fn update(&mut self, matches: &ArgMatches) {
-        self.get_args(&matches);
-        self.debug_msg(CMD_UPDATE);
-
-        // get db file path
-        if !self.db.exists() {
-            error!("db not exists");
-            return;
-        }
-
-        //let path = PathBuf::from(matches.value_of(KEY_DIR).unwrap_or(DEFAULT_DIR_FILENAME));
-    }
-
     // open db
     //pub fn open<P: AsRef<Path>>(path: P) {
     //// get db file path
@@ -330,33 +366,6 @@ impl Command {
 
     //if let Ok(file_tree) = FileTree::read(&db) {}
     //}
-
-    // read and show entry
-    pub fn read(&mut self, matches: &ArgMatches) {
-        self.get_args(&matches);
-        self.debug_msg(CMD_READ);
-
-        // get db file path
-        if !self.db.exists() {
-            error!("db not exists");
-            return;
-        }
-
-        if let Ok(node) = Node::load(&self.db) {
-            // get entry if exists
-            if let Some(entry) = node.get(&self.path) {
-                println!(
-                    "{:?} {}",
-                    Node::get_full_path(&entry.borrow()),
-                    entry.to_string_ext(self.bitflag)
-                );
-            } else {
-                error!("file not found");
-            }
-        } else {
-            error!("file tree read error");
-        }
-    }
 
     /// remove file/path
     /// rm [PATH] -R
@@ -382,6 +391,46 @@ impl Command {
             } else {
                 error!("cant remove");
             }
+        } else {
+            error!("cant load db");
+        }
+    }
+
+    /// copy file/path
+    /// cp [SOURCE] [DESTINATION] [-NDTSCMARHG]
+    ///  -N, --name
+    ///  -D, --description
+    ///  -T, --type
+    ///  -S, --size
+    ///  -C, --created
+    ///  -M, --modified
+    ///  -A, --accessed
+    //  XXX: mb -R, --recurse
+    ///  -H, --children
+    ///  -G, --tags
+    pub fn copy(&mut self, matches: &ArgMatches) {
+        self.get_args(&matches);
+        self.debug_msg(CMD_CP);
+
+        // get db file path
+        if !self.db.exists() {
+            error!("db not exists");
+            return;
+        }
+
+        if let Ok(node) = Node::load(&self.db) {
+            // get entry if exists
+            if !node.exists(&self.path) {
+                error!("path not exists");
+                return;
+            }
+
+            //node.create
+            //if node.remove(&self.path).is_some() {
+            //node.save(&self.db).unwrap();
+            //} else {
+            //error!("cant remove");
+            //}
         } else {
             error!("cant load db");
         }
@@ -538,6 +587,127 @@ impl Command {
         debug!("command: {} args: {}", cmd, &self,);
     }
 
+    /// CRUD: create
+    ///
+    /// linden create [path/file] [-D description] [-G tags] [-s sha256] [-M modified]
+    /// [-A accessed] [-C created] [-S size] [-T file_type] [-X hidden] [-X comment]
+    pub fn create(&mut self, matches: &ArgMatches) {
+        self.get_args(&matches);
+        self.get_node_data(&matches);
+        self.debug_msg(CMD_CREATE);
+
+        // get db file path
+        if !self.db.exists() {
+            error!("db not exists");
+            return;
+        }
+
+        // open db
+        if let Ok(mut node) = Node::load(&self.db) {
+            // get entry if exists
+            if node.exists(&self.path) {
+                error!("path already exists");
+                return;
+            }
+
+            if let Some(node_data) = self.node_data.clone() {
+                // create node
+                node.create(&self.path, node_data);
+                // save db
+                node.save(&self.db).unwrap();
+            }
+        } else {
+            error!("cant load db");
+        }
+    }
+
+    /// CRUD: read
+    ///
+    /// linden read [path/file] [-DGSMACSTXX]
+    pub fn read(&mut self, matches: &ArgMatches) {
+        self.get_args(&matches);
+        self.debug_msg(CMD_READ);
+
+        // get db file path
+        if !self.db.exists() {
+            error!("db not exists");
+            return;
+        }
+
+        if let Ok(mut node) = Node::load(&self.db) {
+            if let Some(file) = node.get(&self.path) {
+                println!("{}", file.to_string_ext(self.bitflag));
+            } else {
+                error!("file not found");
+            }
+        } else {
+            error!("file tree read error");
+        }
+    }
+
+    /// CRUD: update
+    ///
+    /// linden update [path/file] [-D description] [-G tags] [-s sha256] [-M modified]
+    /// [-A accessed] [-C created] [-S size] [-T file_type] [-X hidden] [-X comment]
+    pub fn update(&mut self, matches: &ArgMatches) {
+        self.get_args(&matches);
+        self.get_node_data(&matches);
+        self.debug_msg(CMD_UPDATE);
+
+        dbg!(&self.node_data);
+        dbg!(&self.bitflag);
+
+        // get db file path
+        if !self.db.exists() {
+            error!("db not exists");
+            return;
+        }
+
+        if let Ok(mut node) = Node::load(&self.db) {
+            // get entry if exists
+            if !node.exists(&self.path) {
+                error!("path node exists");
+                return;
+            }
+
+            if let Some(node_data) = self.node_data.clone() {
+                if let Some(mut target_node) = node.get(&self.path) {
+                    // update node
+                    target_node.update_ext(&node_data, self.bitflag);
+
+                    // save db
+                    node.save(&self.db).unwrap();
+                }
+            }
+        } else {
+            error!("cant load db");
+        }
+    }
+
+    /// CRUD: delete
+    ///
+    /// linden delete [path/file] [-DGSMACSTXX]
+    pub fn delete(&mut self, matches: &ArgMatches) {
+        self.get_args(&matches);
+        self.debug_msg(CMD_DELETE);
+
+        // get db file path
+        if !self.db.exists() {
+            error!("db not exists");
+            return;
+        }
+
+        if let Ok(mut node) = Node::load(&self.db) {
+            if node.exists(&self.path) {
+                println!("delete: {:?}", &self.path);
+            } else {
+                error!("file not found");
+            }
+        } else {
+            error!("file tree read error");
+        }
+    }
+
     /// store user given options
     pub fn get_args(&mut self, matches: &ArgMatches) {
         // db file
@@ -593,17 +763,21 @@ impl Command {
     pub fn match_command(&mut self, matches: &ArgMatches) {
         match matches.subcommand() {
             (CMD_INIT, Some(matches)) => self.init(matches),
-            (CMD_LS, Some(matches)) => self.ls(matches),
+            (CMD_ADD, Some(matches)) => self.add(matches),
             (CMD_EDIT, Some(matches)) => self.edit(matches),
-            (CMD_READ, Some(matches)) => self.read(matches),
+            (CMD_MERGE, Some(matches)) => self.merge(matches),
+            (CMD_CLEAR, Some(matches)) => self.clear(matches),
             (CMD_RM, Some(matches)) => self.rm(matches),
+            (CMD_LS, Some(matches)) => self.ls(matches),
             (CMD_STATUS, Some(matches)) => self.status(matches),
             (CMD_PRINT, Some(matches)) => self.print(matches),
             (CMD_SORT, Some(matches)) => self.sort(matches),
-            (CMD_CLEAR, Some(matches)) => self.clear(matches),
+            // CRUD: create, read, update, delete
+            (CMD_CREATE, Some(matches)) => self.create(matches),
+            (CMD_READ, Some(matches)) => self.read(matches),
             (CMD_UPDATE, Some(matches)) => self.update(matches),
-            (CMD_ADD, Some(matches)) => self.add(matches),
-            (CMD_MERGE, Some(matches)) => self.merge(matches),
+            (CMD_DELETE, Some(matches)) => self.delete(matches),
+            //(CMD_COPY, Some(matches)) => self.copy(matches),
             _ => info!("{}", LOG_CLI_NO_SUBCOMMAND_RECIEVED),
         }
     }

@@ -26,7 +26,22 @@ impl<'a, 'b> Cli<'a, 'b> {
             .index(1)
     }
 
+    /// create source path arg
+    /// `[SOURCE]`
+    pub fn arg_source() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_SOURCE).help(KEY_SOURCE_HELP).index(1)
+    }
+
+    /// create destination path arg
+    /// `[DESTINATION]`
+    pub fn arg_destination() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_DESTINATION)
+            .help(KEY_DESTINATION_HELP)
+            .index(2)
+    }
+
     /// name as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_name() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_NAME)
             .short(KEY_BITFLAG_NAME_SHORT)
@@ -34,7 +49,19 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_NAME_HELP)
     }
 
+    /// name as bitflag
+    /// `[-N <name>]`
+    pub fn arg_name() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_NAME)
+            .short(KEY_BITFLAG_NAME_SHORT)
+            .long(KEY_BITFLAG_NAME_LONG)
+            .help(KEY_BITFLAG_NAME_HELP)
+            .value_name(KEY_NAME)
+            .takes_value(true)
+    }
+
     /// desc as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_desc() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_DESC)
             .short(KEY_BITFLAG_DESC_SHORT)
@@ -42,7 +69,19 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_DESC_HELP)
     }
 
+    /// desc as bitflag
+    /// `[-N <desc>]`
+    pub fn arg_desc() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_DESC)
+            .short(KEY_BITFLAG_DESC_SHORT)
+            .long(KEY_BITFLAG_DESC_LONG)
+            .help(KEY_BITFLAG_DESC_HELP)
+            .value_name(KEY_DESC)
+            .takes_value(true)
+    }
+
     /// accessed time as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_accessed() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_ACCESSED)
             .short(KEY_BITFLAG_ACCESSED_SHORT)
@@ -50,7 +89,19 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_ACCESSED_HELP)
     }
 
+    /// accessed time as bitflag
+    /// `[-N <accessed>]`
+    pub fn arg_accessed() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_ACCESSED)
+            .short(KEY_BITFLAG_ACCESSED_SHORT)
+            .long(KEY_BITFLAG_ACCESSED_LONG)
+            .help(KEY_BITFLAG_ACCESSED_HELP)
+            .value_name(KEY_ACCESSED)
+            .takes_value(true)
+    }
+
     /// created time as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_created() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_CREATED)
             .short(KEY_BITFLAG_CREATED_SHORT)
@@ -58,7 +109,19 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_CREATED_HELP)
     }
 
+    /// created time as bitflag
+    /// `[-N <created>]`
+    pub fn arg_created() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_CREATED)
+            .short(KEY_BITFLAG_CREATED_SHORT)
+            .long(KEY_BITFLAG_CREATED_LONG)
+            .help(KEY_BITFLAG_CREATED_HELP)
+            .value_name(KEY_CREATED)
+            .takes_value(true)
+    }
+
     /// modified time as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_modified() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_MODIFIED)
             .short(KEY_BITFLAG_MODIFIED_SHORT)
@@ -66,7 +129,19 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_MODIFIED_HELP)
     }
 
+    /// modified time as bitflag
+    /// `[-N <modified>]`
+    pub fn arg_modified() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_MODIFIED)
+            .short(KEY_BITFLAG_MODIFIED_SHORT)
+            .long(KEY_BITFLAG_MODIFIED_LONG)
+            .help(KEY_BITFLAG_MODIFIED_HELP)
+            .value_name(KEY_MODIFIED)
+            .takes_value(true)
+    }
+
     /// size as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_size() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_SIZE)
             .short(KEY_BITFLAG_SIZE_SHORT)
@@ -74,7 +149,19 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_SIZE_HELP)
     }
 
+    /// size as bitflag
+    /// `[-N <size>]`
+    pub fn arg_size() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_SIZE)
+            .short(KEY_BITFLAG_SIZE_SHORT)
+            .long(KEY_BITFLAG_SIZE_LONG)
+            .help(KEY_BITFLAG_SIZE_HELP)
+            .value_name(KEY_SIZE)
+            .takes_value(true)
+    }
+
     /// type as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_type() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_FILE_TYPE)
             .short(KEY_BITFLAG_FILE_TYPE_SHORT)
@@ -82,7 +169,19 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_FILE_TYPE_HELP)
     }
 
+    /// type as bitflag
+    /// `[-N <type>]`
+    pub fn arg_type() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_FILE_TYPE)
+            .short(KEY_BITFLAG_FILE_TYPE_SHORT)
+            .long(KEY_BITFLAG_FILE_TYPE_LONG)
+            .help(KEY_BITFLAG_FILE_TYPE_HELP)
+            .value_name(KEY_FILE_TYPE)
+            .takes_value(true)
+    }
+
     /// tags as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_tags() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_TAGS)
             .short(KEY_BITFLAG_TAGS_SHORT)
@@ -90,12 +189,35 @@ impl<'a, 'b> Cli<'a, 'b> {
             .help(KEY_BITFLAG_TAGS_HELP)
     }
 
+    /// tags as bitflag
+    /// `[-N <tags>]`
+    pub fn arg_tags() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_TAGS)
+            .short(KEY_BITFLAG_TAGS_SHORT)
+            .long(KEY_BITFLAG_TAGS_LONG)
+            .help(KEY_BITFLAG_TAGS_HELP)
+            .value_name(KEY_TAGS)
+            .takes_value(true)
+    }
+
     /// comment as bitflag
+    /// `[-N]`
     pub fn arg_bitflag_comment() -> Arg<'a, 'b> {
         Arg::with_name(KEY_BITFLAG_COMMENT)
             .short(KEY_BITFLAG_COMMENT_SHORT)
             .long(KEY_BITFLAG_COMMENT_LONG)
             .help(KEY_BITFLAG_COMMENT_HELP)
+    }
+
+    /// comment as bitflag
+    /// `[-N <comment>]`
+    pub fn arg_comment() -> Arg<'a, 'b> {
+        Arg::with_name(KEY_BITFLAG_COMMENT)
+            .short(KEY_BITFLAG_COMMENT_SHORT)
+            .long(KEY_BITFLAG_COMMENT_LONG)
+            .help(KEY_BITFLAG_COMMENT_HELP)
+            .value_name(KEY_COMMENT)
+            .takes_value(true)
     }
 
     // prepare and use clap functions for cli
@@ -348,6 +470,77 @@ impl<'a, 'b> Cli<'a, 'b> {
                     )
                     .arg(Cli::arg_path()),
             )
+            // CRUD: create
+            .subcommand(
+                SubCommand::with_name(CMD_CREATE)
+                    .about(CMD_CREATE_TEXT)
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_name())
+                    .arg(Cli::arg_desc())
+                    .arg(Cli::arg_accessed())
+                    .arg(Cli::arg_created())
+                    .arg(Cli::arg_modified())
+                    .arg(Cli::arg_size())
+                    .arg(Cli::arg_type())
+                    .arg(Cli::arg_tags())
+                    .arg(Cli::arg_comment())
+                    .arg(Cli::arg_path()),
+            )
+            // CRUD: read
+            .subcommand(
+                SubCommand::with_name(CMD_READ)
+                    .about(CMD_READ_TEXT)
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_bitflag_name())
+                    .arg(Cli::arg_bitflag_desc())
+                    .arg(Cli::arg_bitflag_accessed())
+                    .arg(Cli::arg_bitflag_created())
+                    .arg(Cli::arg_bitflag_modified())
+                    .arg(Cli::arg_bitflag_size())
+                    .arg(Cli::arg_bitflag_type())
+                    .arg(Cli::arg_bitflag_tags())
+                    .arg(Cli::arg_bitflag_comment())
+                    .arg(Cli::arg_path()),
+            )
+            // CRUD: update
+            .subcommand(
+                SubCommand::with_name(CMD_UPDATE)
+                    .about(CMD_UPDATE_TEXT)
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_name())
+                    .arg(Cli::arg_desc())
+                    .arg(Cli::arg_accessed())
+                    .arg(Cli::arg_created())
+                    .arg(Cli::arg_modified())
+                    .arg(Cli::arg_size())
+                    .arg(Cli::arg_type())
+                    .arg(Cli::arg_tags())
+                    .arg(Cli::arg_comment())
+                    .arg(Cli::arg_path()),
+            )
+            // CRUD: delete
+            .subcommand(
+                SubCommand::with_name(CMD_DELETE)
+                    .about(CMD_DELETE_TEXT)
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_path()),
+            )
+            // cp
+            .subcommand(
+                SubCommand::with_name(CMD_CP)
+                    .about(CMD_CP_TEXT)
+                    .arg(Cli::arg_db())
+                    .arg(Cli::arg_bitflag_name())
+                    .arg(Cli::arg_bitflag_desc())
+                    .arg(Cli::arg_bitflag_accessed())
+                    .arg(Cli::arg_bitflag_created())
+                    .arg(Cli::arg_bitflag_modified())
+                    .arg(Cli::arg_bitflag_size())
+                    .arg(Cli::arg_bitflag_type())
+                    .arg(Cli::arg_bitflag_tags())
+                    .arg(Cli::arg_bitflag_comment())
+                    .arg(Cli::arg_path()),
+            )
             // mv
             .subcommand(
                 SubCommand::with_name(CMD_MV)
@@ -355,28 +548,6 @@ impl<'a, 'b> Cli<'a, 'b> {
                     .arg(Cli::arg_db())
                     .arg(Cli::arg_path()),
                 //.arg(DST),
-            )
-            // update
-            .subcommand(
-                SubCommand::with_name(CMD_UPDATE)
-                    .about(CMD_UPDATE_TEXT)
-                    .arg(Cli::arg_db())
-                    .arg(Cli::arg_path()),
-            )
-            // read
-            .subcommand(
-                SubCommand::with_name(CMD_READ)
-                    .about(CMD_READ_TEXT)
-                    .arg(Cli::arg_db())
-                    .arg(
-                        Arg::with_name(KEY_DESC)
-                            .short(KEY_DESC_SHORT)
-                            .long(KEY_DESC_LONG)
-                            .value_name(KEY_DESCRIPTION)
-                            .help(KEY_DESC_HELP)
-                            .takes_value(true),
-                    )
-                    .arg(Cli::arg_path()),
             )
             // print
             .subcommand(

@@ -44,6 +44,9 @@ pub const CMD_INIT: &str = "init";
 pub const CMD_INIT_TEXT: &str = "initialize file tree";
 
 // XXX: mb CRUD?
+pub const CMD_CREATE: &str = "create";
+pub const CMD_CREATE_TEXT: &str = "create file node";
+
 // edit [-b <DB>]
 pub const CMD_EDIT: &str = "edit";
 pub const CMD_EDIT_TEXT: &str = "edit file node";
@@ -67,6 +70,10 @@ pub const CMD_RM_TEXT: &str = "remove file node";
 // mv [-b <DB>] [PATH]
 pub const CMD_MV: &str = "mv";
 pub const CMD_MV_TEXT: &str = "move file node";
+
+// cp [-b <DB>] [PATH]
+pub const CMD_CP: &str = "cp";
+pub const CMD_CP_TEXT: &str = "cp file node";
 
 // print-meta [-b <DB>]
 pub const CMD_PRINT_META: &str = "print-meta";
@@ -94,6 +101,9 @@ pub const CMD_SORT_TEXT: &str = "sort tree";
 // merge
 pub const CMD_MERGE: &str = "merge";
 pub const CMD_MERGE_TEXT: &str = "merge tree";
+
+pub const CMD_DELETE: &str = "delete";
+pub const CMD_DELETE_TEXT: &str = "delete file node";
 
 // update
 pub const CMD_UPDATE: &str = "update";
@@ -138,12 +148,14 @@ pub const KEY_BITFLAG_NAME: &str = "NAME";
 pub const KEY_BITFLAG_NAME_SHORT: &str = "-N";
 pub const KEY_BITFLAG_NAME_LONG: &str = "--name";
 pub const KEY_BITFLAG_NAME_HELP: &str = "name";
+pub const KEY_NAME: &str = "NAME";
 pub const CMD_ALIAS_BITFLAG_NAME: &str = "name";
 // -D
 pub const KEY_BITFLAG_DESC: &str = "DESC";
 pub const KEY_BITFLAG_DESC_SHORT: &str = "-D";
 pub const KEY_BITFLAG_DESC_LONG: &str = "--description";
 pub const KEY_BITFLAG_DESC_HELP: &str = "description";
+pub const KEY_DESC: &str = "DESC";
 pub const CMD_ALIAS_BITFLAG_DESC: &str = "desc";
 //pub const KEY_BITFLAG_SHA256: &str = "SHA256";
 //pub const KEY_BITFLAG_SHA256_SHORT: &str = "-h";
@@ -154,26 +166,31 @@ pub const KEY_BITFLAG_MODIFIED: &str = "MODIFIED";
 pub const KEY_BITFLAG_MODIFIED_SHORT: &str = "-M";
 pub const KEY_BITFLAG_MODIFIED_LONG: &str = "--modified";
 pub const KEY_BITFLAG_MODIFIED_HELP: &str = "modified";
+pub const KEY_MODIFIED: &str = "MODIFIED";
 // -A
 pub const KEY_BITFLAG_ACCESSED: &str = "ACCESSED";
 pub const KEY_BITFLAG_ACCESSED_SHORT: &str = "-A";
 pub const KEY_BITFLAG_ACCESSED_LONG: &str = "--accessed";
 pub const KEY_BITFLAG_ACCESSED_HELP: &str = "accessed";
+pub const KEY_ACCESSED: &str = "ACCESSED";
 // -C
 pub const KEY_BITFLAG_CREATED: &str = "CREATED";
 pub const KEY_BITFLAG_CREATED_SHORT: &str = "-C";
 pub const KEY_BITFLAG_CREATED_LONG: &str = "--created";
 pub const KEY_BITFLAG_CREATED_HELP: &str = "created";
+pub const KEY_CREATED: &str = "CREATED";
 // -S
 pub const KEY_BITFLAG_SIZE: &str = "SIZE";
 pub const KEY_BITFLAG_SIZE_SHORT: &str = "-S";
 pub const KEY_BITFLAG_SIZE_LONG: &str = "--size";
 pub const KEY_BITFLAG_SIZE_HELP: &str = "size";
+pub const KEY_SIZE: &str = "SIZE";
 // -T
 pub const KEY_BITFLAG_FILE_TYPE: &str = "FILE_TYPE";
 pub const KEY_BITFLAG_FILE_TYPE_SHORT: &str = "-T";
 pub const KEY_BITFLAG_FILE_TYPE_LONG: &str = "--type";
 pub const KEY_BITFLAG_FILE_TYPE_HELP: &str = "type";
+pub const KEY_FILE_TYPE: &str = "FILE_TYPE";
 // -H
 pub const KEY_BITFLAG_CHILDREN: &str = "CHILDREN";
 pub const KEY_BITFLAG_CHILDREN_SHORT: &str = "-H";
@@ -184,11 +201,13 @@ pub const KEY_BITFLAG_TAGS: &str = "TAGS";
 pub const KEY_BITFLAG_TAGS_SHORT: &str = "-G";
 pub const KEY_BITFLAG_TAGS_LONG: &str = "--tags";
 pub const KEY_BITFLAG_TAGS_HELP: &str = "tags";
+pub const KEY_TAGS: &str = "TAGS";
 // -O
 pub const KEY_BITFLAG_COMMENT: &str = "COMMENT";
 pub const KEY_BITFLAG_COMMENT_SHORT: &str = "-O";
 pub const KEY_BITFLAG_COMMENT_LONG: &str = "--comment";
 pub const KEY_BITFLAG_COMMENT_HELP: &str = "comment";
+pub const KEY_COMMENT: &str = "COMMENT";
 
 pub const KEY_BITFLAG_SORT_ORDER: &str = "ORDER_ASC";
 pub const KEY_BITFLAG_SORT_ORDER_SHORT: &str = "-r";
@@ -201,6 +220,14 @@ pub const KEY_BITFLAG_SORT_ORDER_DESC: &str = "desc";
 pub const KEY_PATH: &str = "PATH";
 pub const KEY_PATH_HELP: &str = "path or file";
 pub const DEFAULT_PATH: &str = ".";
+
+// `[SOURCE]`
+pub const KEY_SOURCE: &str = "SOURCE";
+pub const KEY_SOURCE_HELP: &str = "source path or file";
+
+// `[DESTINATION]`
+pub const KEY_DESTINATION: &str = "DESTIONATION";
+pub const KEY_DESTINATION_HELP: &str = "destination path or file";
 
 //pub const KEY_FILE_NAME: &str = "FILE";
 //pub const KEY_FILE_NAME_HELP: &str = "file name";
@@ -223,19 +250,19 @@ pub const KEY_DB_HELP: &str = "User defined database file";
 pub const KEY_DB_FILE: &str = "DATABASE_FILE";
 pub const DEFAULT_DB_FILENAME: &str = ".tree.yml";
 
-pub const KEY_DESC: &str = "description";
+//pub const KEY_DESC: &str = "description";
 pub const KEY_DESC_SHORT: &str = "-d";
 pub const KEY_DESC_LONG: &str = "--description";
 pub const KEY_DESC_HELP: &str = "Description";
 pub const KEY_DESCRIPTION: &str = "DESCRIPTION";
 
-pub const KEY_TAGS: &str = "tags";
+//pub const KEY_TAGS: &str = "tags";
 pub const KEY_TAGS_SHORT: &str = "-G";
 pub const KEY_TAGS_LONG: &str = "--tags";
 pub const KEY_TAGS_HELP: &str = "Tags";
 //pub const KEY_TAGS: &str = "TAGS";
 
-pub const KEY_COMMENT: &str = "comment";
+//pub const KEY_COMMENT: &str = "comment";
 pub const KEY_COMMENT_SHORT: &str = "-c";
 pub const KEY_COMMENT_LONG: &str = "--comment";
 pub const KEY_COMMENT_HELP: &str = "Comment";

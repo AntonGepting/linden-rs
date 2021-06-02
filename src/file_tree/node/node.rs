@@ -20,7 +20,7 @@ use std::path::{Component, Path, PathBuf};
 use std::rc::{Rc, Weak};
 use text_tree_elements::TextTreeElements;
 
-/// default/child pointer
+/// default/child pointer (refcell)
 pub type NodeRc = Rc<RefCell<NodeData>>;
 /// parent pointer
 pub type NodeWeak = Weak<RefCell<NodeData>>;
@@ -51,7 +51,8 @@ impl Default for ColorScheme {
     }
 }
 
-/// newtype wrapper, bc there is a need to imp methods for this type (for NodeRc impossible)
+/// newtype wrapper
+/// because methods needed for this type (for NodeRc impossible)
 #[derive(Debug, Clone, Default)]
 pub struct Node(pub NodeRc);
 
@@ -96,6 +97,8 @@ pub struct NodeData {
     /// user's comment
     pub comment: Option<String>,
 }
+
+impl NodeData {}
 
 // XXX: think about return same type for all fn's returning Node, then maybe unwrap Rc? Same work
 // for all such functions
@@ -437,12 +440,73 @@ impl Node {
         result
     }
 
+    /// copy selected fields from origin
+    pub fn copy_ext(&self, origin: &Node, bitflag: usize) {
+        let mut node = self.borrow_mut();
+        let origin = origin.borrow();
+
+        if (bitflag & NODE_NAME) > 0 {
+            node.file = origin.file.clone();
+        }
+        if (bitflag & NODE_DESC) > 0 {
+            node.file = origin.file.clone();
+        }
+        if (bitflag & NODE_TAGS) > 0 {
+            node.tags = origin.tags.clone();
+        }
+        if (bitflag & NODE_SHA256) > 0 {
+            node.sha256 = origin.sha256.clone();
+        }
+        if (bitflag & NODE_STATUS) > 0 {
+            node.status = origin.status;
+        }
+        if (bitflag & NODE_MODIFIED) > 0 {
+            node.modified = origin.modified.clone();
+        }
+        if (bitflag & NODE_ACCESSED) > 0 {
+            node.accessed = origin.accessed.clone();
+        }
+        if (bitflag & NODE_CREATED) > 0 {
+            node.created = origin.created.clone();
+        }
+        if (bitflag & NODE_SIZE) > 0 {
+            node.size = origin.size.clone();
+        }
+        if (bitflag & NODE_FILE_TYPE) > 0 {
+            node.file_type = origin.file_type.clone();
+        }
+    }
+
     // XXX: -1?
     pub fn children_num(&self) -> usize {
         match &self.0.borrow().children {
             Some(children) => children.len(),
             None => 0,
         }
+    }
+
+    /// create node with user given data
+    // XXX: create paths force?
+    // TODO: default path
+    pub fn create<P: AsRef<Path> + Copy>(&mut self, path: P, mut data: NodeData) -> Option<()> {
+        // get dir path from full path, without file
+        let dir_name = path.as_ref().parent().unwrap_or(Path::new("."));
+        // does parent node exist?
+        self.get(dir_name).and_then(|parent_node| {
+            // get file name
+            path.as_ref().file_name().and_then(|file_name| {
+                // if child not exists
+                if parent_node.get_child(file_name).is_none() {
+                    data.file = file_name.to_owned();
+                    data.parent = Some(Rc::downgrade(&parent_node.0));
+                    let node = Rc::new(RefCell::new(data));
+                    self.add_child(node);
+                    Some(())
+                } else {
+                    None
+                }
+            })
+        })
     }
 
     // add files and directories to self (TreeEntry)
@@ -734,7 +798,29 @@ impl Node {
         })
     }
 
+    // TODO: write it
+    // XXX: Option
+    // XXX: examples check is it properly
+    // XXX: destroy vec if last aswell
+    pub fn remove<P: AsRef<Path>>(&self, path: P) -> Option<()> {
+        if let Some(file) = path.as_ref().file_name() {
+            // get dir from path
+            if let Some(dir) = path.as_ref().parent() {
+                // get parent node
+                if let Some(node) = self.get(dir) {
+                    node.remove_child(file);
+                } else {
+                    // path not found
+                }
+            } else {
+                self.remove_child(file);
+            }
+        };
+        Some(())
+    }
+
     // remove child by name
+    // XXX: if last set children None
     pub fn remove_child<S: AsRef<OsStr>>(&self, file: S) {
         self.borrow_mut().children.as_mut().and_then(|children| {
             Some(children.retain(|child| child.borrow().file != file.as_ref()))
@@ -762,6 +848,25 @@ impl Node {
         self.0.borrow().parent.as_ref().and_then(Weak::upgrade)
     }
 
+    /// get parent node of parent path from full path
+    /// (example: `/home/user/example/file.rs` -> `/home/user/example`)
+    pub fn get_parent_node_from_full_path<P: AsRef<Path>>(&self, full_path: P) -> Option<Node> {
+        self.get_parent_node_from_full_path_ext(full_path, ".")
+    }
+
+    /// get parent node of parent path from full path
+    /// (example: `/home/user/example/file.rs` -> `/home/user/example`)
+    /// (example: `./file.rs` -> `[default]`)
+    pub fn get_parent_node_from_full_path_ext<P: AsRef<Path>, Q: AsRef<Path>>(
+        &self,
+        full_path: P,
+        default: Q,
+    ) -> Option<Node> {
+        let dir = full_path.as_ref().parent().unwrap_or(default.as_ref());
+        self.get(dir)
+    }
+
+    // another way?
     pub fn get_parent_by_name<P: AsRef<Path>>(&self, path: P) -> Option<NodeRc> {
         match self.get(path) {
             Some(node) => match node.borrow().parent.as_ref() {
@@ -791,6 +896,19 @@ impl Node {
 
     pub fn has_children(&self) -> bool {
         self.borrow().children.is_some()
+    }
+
+    pub fn has_child(&self, file: &OsStr) -> bool {
+        if let Some(children) = &self.borrow().children {
+            for child in children {
+                if child.borrow().file == file {
+                    return true;
+                }
+            }
+            false
+        } else {
+            false
+        }
     }
 
     pub fn ls(&self, path: &Path) -> Result<(), Error> {
@@ -946,20 +1064,6 @@ impl Node {
 
     //Some(v)
     //}
-
-    // TODO: write it
-    // XXX: Option
-    // XXX: examples check is it properly
-    // XXX: destroy vec if last aswell
-    pub fn remove<P: AsRef<Path>>(&self, path: P) -> Option<()> {
-        self.get(path).and_then(|node| {
-            node.borrow().parent.as_ref().and_then(|parent_weak| {
-                parent_weak
-                    .upgrade()
-                    .and_then(|parent| Some(Node(parent).remove_child(&node.borrow().file)))
-            })
-        })
-    }
 
     /// set parent field
     pub fn set_parent(&self, parent: NodeWeak) {
@@ -1237,9 +1341,10 @@ impl Node {
     }
 
     // XXX: rename copy or smthg
-    pub fn update_ext(&mut self, origin: &Node, bitflag: usize) {
+    /// CRUD: update
+    /// update user given fields of the current node
+    pub fn update_ext(&mut self, origin: &NodeData, bitflag: usize) {
         let mut node = self.borrow_mut();
-        let origin = origin.borrow();
         //if (bitflag & COMPARE_NAME) > 0 {
         //name = &origin_name.clone();
         //}
@@ -1269,6 +1374,9 @@ impl Node {
         }
         if (bitflag & NODE_TAGS) > 0 {
             node.tags = origin.tags.clone();
+        }
+        if (bitflag & NODE_COMMENT) > 0 {
+            node.comment = origin.comment.clone();
         }
     }
 
