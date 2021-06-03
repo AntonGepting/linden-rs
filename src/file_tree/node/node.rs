@@ -1,8 +1,8 @@
 // TODO: split in tree and node
 //#![forbid(unsafe_code)]
 //#![warn(missing_docs)]
-
 use crate::cli::color::TerminalColor;
+use crate::file_tree::node::color_scheme::ColorScheme;
 use crate::file_tree::{Error, FileTree, FileType, TreeEntry};
 use crate::file_tree::{
     NODE_ACCESSED, NODE_ALL, NODE_CHILDREN, NODE_COMMENT, NODE_CREATED, NODE_DEFAULT, NODE_DESC,
@@ -24,32 +24,6 @@ use text_tree_elements::TextTreeElements;
 pub type NodeRc = Rc<RefCell<NodeData>>;
 /// parent pointer
 pub type NodeWeak = Weak<RefCell<NodeData>>;
-
-/// color scheme struct for colored strings output
-pub struct ColorScheme {
-    /// node changed
-    pub changed: TerminalColor,
-    /// node changed
-    pub removed: TerminalColor,
-    /// node changed
-    pub untracked: TerminalColor,
-    /// standard
-    pub standard: TerminalColor,
-    /// default
-    pub default: TerminalColor,
-}
-
-impl Default for ColorScheme {
-    fn default() -> Self {
-        ColorScheme {
-            changed: TerminalColor::Yellow,
-            removed: TerminalColor::Red,
-            untracked: TerminalColor::Blue,
-            standard: TerminalColor::Green,
-            default: TerminalColor::Default,
-        }
-    }
-}
 
 /// newtype wrapper
 /// because methods needed for this type (for NodeRc impossible)
