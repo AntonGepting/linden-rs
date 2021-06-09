@@ -2,13 +2,9 @@
 //#![forbid(unsafe_code)]
 //#![warn(missing_docs)]
 use crate::cli::color::TerminalColor;
+use crate::file_tree::common::constants::*;
 use crate::file_tree::node::color_scheme::ColorScheme;
 use crate::file_tree::{Error, FileTree, FileType, TreeEntry};
-use crate::file_tree::{
-    NODE_ACCESSED, NODE_ALL, NODE_CHILDREN, NODE_COMMENT, NODE_CREATED, NODE_DEFAULT, NODE_DESC,
-    NODE_FILE_TYPE, NODE_MODIFIED, NODE_NAME, NODE_NONE, NODE_NOT_EXISTS, NODE_SHA256, NODE_SIZE,
-    NODE_STATUS, NODE_TAGS, NODE_UNTRACKED, SORT_ASC,
-};
 use chrono::offset::Utc;
 use chrono::DateTime;
 use std::cell::{Ref, RefCell, RefMut};
@@ -230,35 +226,35 @@ impl Node {
 
     // XXX: string as output
     pub fn bitflag_to_string(bitflag: usize) -> String {
-        let mut s = String::new();
+        let mut v = Vec::new();
         if (bitflag & NODE_DESC) > 0 {
-            s = format!("{}desc ", s);
+            v.push("desc");
         }
         if (bitflag & NODE_SHA256) > 0 {
-            s = format!("{}sha256 ", s);
+            v.push("sha256");
         }
         if (bitflag & NODE_MODIFIED) > 0 {
-            s = format!("{}modified ", s);
+            v.push("modified");
         }
         if (bitflag & NODE_ACCESSED) > 0 {
-            s = format!("{}accessed ", s);
+            v.push("accessed");
         }
         if (bitflag & NODE_CREATED) > 0 {
-            s = format!("{}created ", s);
+            v.push("created");
         }
         if (bitflag & NODE_SIZE) > 0 {
-            s = format!("{}size ", s);
+            v.push("size");
         }
         if (bitflag & NODE_FILE_TYPE) > 0 {
-            s = format!("{}type ", s);
+            v.push("type");
         }
         if (bitflag & NODE_TAGS) > 0 {
-            s = format!("{}tags ", s);
+            v.push("tags");
         }
         if (bitflag & NODE_COMMENT) > 0 {
-            s = format!("{}comment ", s);
+            v.push("comment");
         }
-        s
+        v.join(" ")
     }
 
     // clear given fields, recursive if needed
@@ -777,19 +773,21 @@ impl Node {
     // XXX: examples check is it properly
     // XXX: destroy vec if last aswell
     pub fn remove<P: AsRef<Path>>(&self, path: P) -> Option<()> {
+        // get parent node
+        println!("{:?}", path.as_ref());
         if let Some(file) = path.as_ref().file_name() {
-            // get dir from path
+            println!("{:?}", file);
             if let Some(dir) = path.as_ref().parent() {
-                // get parent node
+                println!("{:?}", dir);
                 if let Some(node) = self.get(dir) {
+                    println!("{:?}", file);
                     node.remove_child(file);
-                } else {
-                    // path not found
                 }
             } else {
                 self.remove_child(file);
             }
-        };
+        }
+
         Some(())
     }
 

@@ -4,11 +4,8 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use text_tree_elements::TextTreeElements;
 
-use crate::file_tree::{FileTree, FileType, Node, NodeData, NODE_DEFAULT, NODE_NONE, SORT_DSC};
-use crate::file_tree::{
-    NODE_ACCESSED, NODE_CHILDREN, NODE_COMMENT, NODE_CREATED, NODE_DESC, NODE_FILE_TYPE,
-    NODE_MODIFIED, NODE_NAME, NODE_NOT_EXISTS, NODE_SIZE, NODE_TAGS,
-};
+use crate::file_tree::common::constants::*;
+use crate::file_tree::{FileTree, FileType, Node, NodeData};
 use std::fs;
 
 /// Command structure, used to save user given arguments (CLI args)
@@ -700,6 +697,8 @@ impl Command {
         if let Ok(mut node) = Node::load(&self.db) {
             if node.exists(&self.path) {
                 println!("delete: {:?}", &self.path);
+                node.remove(&self.path).unwrap();
+                node.save(&self.db).unwrap();
             } else {
                 error!("file not found");
             }
