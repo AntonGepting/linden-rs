@@ -774,13 +774,9 @@ impl Node {
     // XXX: destroy vec if last aswell
     pub fn remove<P: AsRef<Path>>(&self, path: P) -> Option<()> {
         // get parent node
-        println!("{:?}", path.as_ref());
         if let Some(file) = path.as_ref().file_name() {
-            println!("{:?}", file);
             if let Some(dir) = path.as_ref().parent() {
-                println!("{:?}", dir);
                 if let Some(node) = self.get(dir) {
-                    println!("{:?}", file);
                     node.remove_child(file);
                 }
             } else {
