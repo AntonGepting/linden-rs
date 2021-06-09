@@ -967,12 +967,13 @@ impl Node {
         index: usize,
         size: usize,
         prefixes: &str,
+        bitflag: usize,
     ) -> Option<Vec<String>> {
         let mut v = Vec::new();
 
         // get brahch text, node string and store these
         let (prefix, branch) = text_tree_elements.get_prefix_branch(level, index, size);
-        let entry_str = self.to_colored_string(NODE_NAME | NODE_SIZE | NODE_DESC);
+        let entry_str = self.to_colored_string(bitflag);
         //let entry_str = self.to_string_ext(NODE_NAME | NODE_SIZE | NODE_DESC);
         v.push(format!("{}{}{}\n", prefixes, branch, entry_str));
 
@@ -983,9 +984,14 @@ impl Node {
         if let Some(children) = &self.borrow().children {
             let size = children.len();
             for (i, child) in children.iter().enumerate() {
-                if let Some(mut c) =
-                    child.process_template(text_tree_elements, level + 1, i, size, &prefixes)
-                {
+                if let Some(mut c) = child.process_template(
+                    text_tree_elements,
+                    level + 1,
+                    i,
+                    size,
+                    &prefixes,
+                    bitflag,
+                ) {
                     v.append(&mut c);
                 }
             }

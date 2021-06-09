@@ -453,7 +453,17 @@ impl<'a, 'b> Cli<'a, 'b> {
                             //.number_of_values(1)
                             .multiple(true),
                         //.min_values(1),
-                    ),
+                    )
+                    .arg(Cli::arg_bitflag_name())
+                    .arg(Cli::arg_bitflag_desc())
+                    .arg(Cli::arg_bitflag_accessed())
+                    .arg(Cli::arg_bitflag_created())
+                    .arg(Cli::arg_bitflag_modified())
+                    .arg(Cli::arg_bitflag_size())
+                    .arg(Cli::arg_bitflag_type())
+                    .arg(Cli::arg_bitflag_tags())
+                    .arg(Cli::arg_bitflag_comment())
+                    .arg(Cli::arg_path()),
             )
             // rm
             .subcommand(

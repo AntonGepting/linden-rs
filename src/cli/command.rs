@@ -198,7 +198,7 @@ impl Command {
             )
             .unwrap();
             let rendered = node
-                .process_template(&tree_elements, 0, 0, node.children_num(), "")
+                .process_template(&tree_elements, 0, 0, node.children_num(), "", self.bitflag)
                 .unwrap();
             let rendered = rendered.join("");
 
@@ -472,7 +472,7 @@ impl Command {
         if let Ok(node) = Node::load(&self.db) {
             let tree = TextTreeElements::default();
             let rendered = node
-                .process_template(&tree, 0, 0, node.children_num(), "")
+                .process_template(&tree, 0, 0, node.children_num(), "", self.bitflag)
                 .unwrap();
             let rendered = rendered.join("");
 
