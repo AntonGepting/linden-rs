@@ -60,6 +60,7 @@ impl Command {
 
     // XXX: refactor self?
     // XXX: mb return option is better?
+    /// only flag
     pub fn get_bitflag(matches: &ArgMatches) -> Option<usize> {
         let mut bitflag = NODE_NONE;
 
@@ -102,6 +103,7 @@ impl Command {
     }
 
     /// get user given node properties
+    /// (flag and the option)
     pub fn get_node_data(&mut self, matches: &ArgMatches) {
         let mut node_data: NodeData = Default::default();
         //node_data.name = PathBuf::from(matches.value_of(KEY_BITFLAG_NAME).unwrap_or(DEFAULT_DB_FILENAME));
@@ -161,7 +163,8 @@ impl Command {
 
         // init & save new tree from given path
         let node =
-            Node::create_from_path_ext(&self.path, self.ignore.as_ref(), self.bitflag).unwrap();
+            Node::create_from_path_ext(&self.path, self.ignore.as_ref(), self.bitflag | NODE_NAME)
+                .unwrap();
         node.save(&self.db).unwrap();
     }
 
@@ -187,13 +190,8 @@ impl Command {
 
         // open db and compare with current state
         if let Ok(mut node) = Node::load(&self.db) {
-            node.fill_compare_status(
-                None,
-                &self.path,
-                self.ignore.as_ref(),
-                NODE_NAME | NODE_SIZE,
-            )
-            .unwrap();
+            node.fill_compare_status(None, &self.path, self.ignore.as_ref(), NODE_NAME)
+                .unwrap();
             let rendered = node
                 .process_template(&tree_elements, 0, 0, node.children_num(), "", self.bitflag)
                 .unwrap();
@@ -294,9 +292,22 @@ impl Command {
         }
     }
 
-    // tree file, id, desc
+    /// linden edit [PATH] [-D description] [-G tags] [-s sha256] [-M modified]
+    /// [-A accessed] [-C created] [-S size] [-T type] [-X hidden] [-X comment]
+    /// [-d <DB>]
+    ///  `-N`, `--name`
+    ///  `-D`, `--description`
+    ///  `-T`, `--type`
+    ///  `-S`, `--size`
+    ///  `-C`, `--created`
+    ///  `-M`, `--modified`
+    ///  `-A`, `--accessed`
+    //  XXX: mb -R, --recurse
+    ///  `-H`, `--children`
+    ///  `-G`, `--tags`
     pub fn edit(&mut self, matches: &ArgMatches) {
         self.get_args(&matches);
+        self.get_node_data(&matches);
         self.debug_msg(CMD_EDIT);
 
         // db exists?
@@ -305,25 +316,44 @@ impl Command {
             return;
         }
 
-        // get description
-        let desc = matches.value_of(KEY_DESC);
-        // get comment
-        let comment = matches.value_of(KEY_COMMENT);
-
-        // file exists?
-        if !self.path.exists() {
-            error!("file or path not exists");
-            return;
-        }
-
         // db open successed?
         if let Ok(node) = Node::load(&self.db) {
             // get entry if exists
             if let Some(entry) = node.get(&self.path) {
                 // modify description
-                entry.borrow_mut().desc = desc.map(String::from);
-                entry.borrow_mut().tags = self.tags.clone();
-                entry.borrow_mut().comment = comment.map(String::from);
+                let mut entry = entry.borrow_mut();
+                if let Some(node_data) = &self.node_data {
+                    //if node_data.file.is_some() {
+                    //entry.file = node_data.file.clone();
+                    //}
+                    if node_data.desc.is_some() {
+                        entry.desc = node_data.desc.clone();
+                    }
+                    if node_data.tags.is_some() {
+                        entry.tags = node_data.tags.clone();
+                    }
+                    if node_data.sha256.is_some() {
+                        entry.sha256 = node_data.sha256.clone();
+                    }
+                    if node_data.comment.is_some() {
+                        entry.comment = node_data.comment.clone();
+                    }
+                    if node_data.modified.is_some() {
+                        entry.modified = node_data.modified.clone();
+                    }
+                    if node_data.accessed.is_some() {
+                        entry.accessed = node_data.accessed.clone();
+                    }
+                    if node_data.created.is_some() {
+                        entry.created = node_data.created.clone();
+                    }
+                    if node_data.size.is_some() {
+                        entry.size = node_data.size.clone();
+                    }
+                    if node_data.file_type.is_some() {
+                        entry.file_type = node_data.file_type.clone();
+                    }
+                }
             } else {
                 error!(
                     "path not found in db: {:?} (file or path not exists)",
@@ -395,16 +425,16 @@ impl Command {
 
     /// copy file/path
     /// cp [SOURCE] [DESTINATION] [-NDTSCMARHG]
-    ///  -N, --name
-    ///  -D, --description
-    ///  -T, --type
-    ///  -S, --size
-    ///  -C, --created
-    ///  -M, --modified
-    ///  -A, --accessed
+    ///  `-N`, `--name`
+    ///  `-D`, `--description`
+    ///  `-T`, `--type`
+    ///  `-S`, `--size`
+    ///  `-C`, `--created`
+    ///  `-M`, `--modified`
+    ///  `-A`, `--accessed`
     //  XXX: mb -R, --recurse
-    ///  -H, --children
-    ///  -G, --tags
+    ///  `-H`, `--children`
+    ///  `-G`, `--tags`
     pub fn copy(&mut self, matches: &ArgMatches) {
         self.get_args(&matches);
         self.debug_msg(CMD_CP);
@@ -445,9 +475,11 @@ impl Command {
         }
 
         if let Ok(node) = Node::load(&self.db) {
-            //let rendered = tree
-            if let Err(err) = node.ls(&self.path) {
-                error!("{}", err);
+            if let Some(v) = node.ls_ext(&self.path, self.bitflag) {
+                let s = v.join("\n");
+                println!("{}", s);
+            } else {
+                error!("ls error");
             }
         }
     }

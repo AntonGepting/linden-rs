@@ -12,6 +12,7 @@ use std::cmp::Ordering;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::fs::DirEntry;
+use std::fs::Metadata;
 use std::path::{Component, Path, PathBuf};
 use std::rc::{Rc, Weak};
 use text_tree_elements::TextTreeElements;
@@ -66,9 +67,38 @@ pub struct NodeData {
     pub hidden: Option<bool>,
     /// user's comment
     pub comment: Option<String>,
+    //pub permissions: Option<>
 }
 
 impl NodeData {}
+
+impl From<&Metadata> for NodeData {
+    fn from(metadata: &Metadata) -> Self {
+        let modified = metadata
+            .modified()
+            .ok()
+            .and_then(|t| Some(DateTime::<Utc>::from(t).to_string()));
+        let accessed = metadata
+            .accessed()
+            .ok()
+            .and_then(|t| Some(DateTime::<Utc>::from(t).to_string()));
+        let created = metadata
+            .created()
+            .ok()
+            .and_then(|t| Some(DateTime::<Utc>::from(t).to_string()));
+
+        let file_type = Some(FileType::from(metadata.file_type()));
+
+        Self {
+            modified,
+            accessed,
+            created,
+            size: Some(metadata.len()),
+            file_type,
+            ..Default::default()
+        }
+    }
+}
 
 // XXX: think about return same type for all fn's returning Node, then maybe unwrap Rc? Same work
 // for all such functions
@@ -493,14 +523,16 @@ impl Node {
     // XXX: additional options as an argument
     // NOTE: overwrites pure file name of the root directory with full path
     pub fn create_from_path_ext<P: AsRef<Path>>(
-        dir: P,
+        path: P,
         ignore: Option<&Vec<String>>,
         bitflag: usize,
     ) -> Result<Node, Error> {
-        let file = dir.as_ref().as_os_str();
+        let file = path.as_ref().as_os_str();
         let mut node = Node(Node::new(file.to_owned(), None));
 
-        node.add_path_ext(None, dir, ignore, bitflag)?;
+        //let metadata = metadata(&path);
+
+        node.add_path_ext(None, path, ignore, bitflag)?;
         Ok(node)
     }
 
@@ -684,15 +716,7 @@ impl Node {
             }
 
             if (bitflag & NODE_FILE_TYPE) > 0 {
-                // file_type
-                let file_type = metadata.file_type();
-                if file_type.is_dir() {
-                    node.file_type = Some(FileType::Directory);
-                } else if file_type.is_file() {
-                    node.file_type = Some(FileType::File);
-                } else if file_type.is_symlink() {
-                    node.file_type = Some(FileType::Symlink);
-                }
+                node.file_type = Some(FileType::from(metadata.file_type()));
             }
 
             if (bitflag & NODE_TAGS) > 0 {
@@ -879,16 +903,24 @@ impl Node {
         }
     }
 
-    pub fn ls(&self, path: &Path) -> Result<(), Error> {
-        let s = self.to_string_ext(NODE_DEFAULT);
-        println!("{}", s);
-        //let curr_path = Node::get_full_path(&self.borrow());
-        //let curr_path_str = curr_path.to_str().unwrap();
-        self.for_children(path, &|child, _i, _size| {
-            //let s = child.to_string_ext(COMPARE_DEFAULT);
-            //println!("{}", s);
-            child.ls(path).unwrap_or(());
-        })
+    pub fn ls(&self, path: &Path) -> Option<Vec<String>> {
+        self.ls_ext(&path, NODE_DEFAULT)
+    }
+
+    // XXX: mb full path as field?
+    // XXX: mb compare like status?
+    pub fn ls_ext(&self, path: &Path, bitflag: usize) -> Option<Vec<String>> {
+        if let Some(node) = self.get(path) {
+            if let Some(children) = &self.borrow().children {
+                let mut v = Vec::new();
+                for child in children {
+                    let s = child.to_string_ext(bitflag);
+                    v.push(s);
+                }
+                return Some(v);
+            }
+        }
+        None
     }
 
     pub fn new<S: Into<OsString>>(file: S, parent: Option<NodeWeak>) -> NodeRc {
@@ -1247,15 +1279,15 @@ impl Node {
             }
         }
 
-        //if (fields_bitflag & NODE_TAGS) > 0 {
-        //if let Some(tags) = &node.tags {
-        //let mut tags = tags.to_string();
-        //if (changes_bitflag & NODE_TAGS) > 0 {
-        //tags = TerminalColor::colorize(&tags, &color);
-        //}
-        //v.push(tags);
-        //}
-        //}
+        if (fields_bitflag & NODE_TAGS) > 0 {
+            if let Some(tags) = &node.tags {
+                let mut tags = tags.join(" ");
+                if (changes_bitflag & NODE_TAGS) > 0 {
+                    tags = TerminalColor::colorize(&tags, &color_scheme.changed);
+                }
+                v.push(tags);
+            }
+        }
 
         if (fields_bitflag & NODE_COMMENT) > 0 {
             if let Some(comment) = &node.comment {

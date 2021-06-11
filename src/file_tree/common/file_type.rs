@@ -9,6 +9,8 @@ pub enum FileType {
     File,
     #[serde(rename = "symlink")]
     Symlink,
+    #[serde(rename = "unknown")]
+    Unknown,
 }
 
 impl fmt::Display for FileType {
@@ -17,6 +19,7 @@ impl fmt::Display for FileType {
             FileType::Directory => "Directory",
             FileType::File => "File",
             FileType::Symlink => "Symlink",
+            FileType::Unknown => "Unknown",
         };
         write!(f, "{}", s)?;
         Ok(())
@@ -32,7 +35,22 @@ impl FromStr for FileType {
             "Directory" => Ok(FileType::Directory),
             "File" => Ok(FileType::File),
             "Symlink" => Ok(FileType::Symlink),
+            "Unknown" => Ok(FileType::Unknown),
             _ => Err(()),
+        }
+    }
+}
+
+impl From<std::fs::FileType> for FileType {
+    fn from(t: std::fs::FileType) -> Self {
+        if t.is_dir() {
+            FileType::Directory
+        } else if t.is_file() {
+            FileType::File
+        } else if t.is_symlink() {
+            FileType::Symlink
+        } else {
+            FileType::Unknown
         }
     }
 }

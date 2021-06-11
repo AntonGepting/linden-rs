@@ -271,7 +271,16 @@ impl<'a, 'b> Cli<'a, 'b> {
                 SubCommand::with_name(CMD_LS)
                     .about(CMD_LS_TEXT)
                     .arg(Cli::arg_db())
-                    .arg(Cli::arg_path()),
+                    .arg(Cli::arg_path())
+                    .arg(Cli::arg_bitflag_name())
+                    .arg(Cli::arg_bitflag_desc())
+                    .arg(Cli::arg_bitflag_accessed())
+                    .arg(Cli::arg_bitflag_created())
+                    .arg(Cli::arg_bitflag_modified())
+                    .arg(Cli::arg_bitflag_size())
+                    .arg(Cli::arg_bitflag_type())
+                    .arg(Cli::arg_bitflag_tags())
+                    .arg(Cli::arg_bitflag_comment()),
             )
             // sort
             .subcommand(
@@ -315,12 +324,7 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .long(KEY_RECURSIVE_LONG)
                             .help(KEY_RECURSIVE_HELP),
                     )
-                    .arg(
-                        Arg::with_name(KEY_BITFLAG_NAME)
-                            .short(KEY_BITFLAG_NAME_SHORT)
-                            .long(KEY_BITFLAG_NAME_LONG)
-                            .help(KEY_BITFLAG_NAME_HELP),
-                    )
+                    .arg(Cli::arg_bitflag_name())
                     .arg(Cli::arg_bitflag_desc())
                     .arg(Cli::arg_bitflag_accessed())
                     .arg(Cli::arg_bitflag_created())
@@ -404,6 +408,15 @@ impl<'a, 'b> Cli<'a, 'b> {
                             .long(KEY_RECURSIVE_LONG)
                             .help(KEY_RECURSIVE_HELP),
                     )
+                    .arg(Cli::arg_bitflag_name())
+                    .arg(Cli::arg_bitflag_desc())
+                    .arg(Cli::arg_bitflag_accessed())
+                    .arg(Cli::arg_bitflag_created())
+                    .arg(Cli::arg_bitflag_modified())
+                    .arg(Cli::arg_bitflag_size())
+                    .arg(Cli::arg_bitflag_type())
+                    .arg(Cli::arg_bitflag_tags())
+                    .arg(Cli::arg_bitflag_comment())
                     .arg(Cli::arg_path()),
             )
             // edit
@@ -411,31 +424,15 @@ impl<'a, 'b> Cli<'a, 'b> {
                 SubCommand::with_name(CMD_EDIT)
                     .about(CMD_EDIT_TEXT)
                     .arg(Cli::arg_db())
-                    .arg(
-                        Arg::with_name(KEY_DESC)
-                            .short(KEY_DESC_SHORT)
-                            .long(KEY_DESC_LONG)
-                            .value_name(KEY_DESCRIPTION)
-                            .help(KEY_DESC_HELP)
-                            .takes_value(true),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_TAGS)
-                            .short(KEY_TAGS_SHORT)
-                            .long(KEY_TAGS_LONG)
-                            //.value_name(KEY_TAGS)
-                            .help(KEY_TAGS_HELP)
-                            .takes_value(true)
-                            .multiple(true),
-                    )
-                    .arg(
-                        Arg::with_name(KEY_COMMENT)
-                            .short(KEY_COMMENT_SHORT)
-                            .long(KEY_COMMENT_LONG)
-                            .value_name(KEY_COMMENT_DESC)
-                            .help(KEY_COMMENT_HELP)
-                            .takes_value(true),
-                    )
+                    .arg(Cli::arg_name())
+                    .arg(Cli::arg_desc())
+                    .arg(Cli::arg_accessed())
+                    .arg(Cli::arg_created())
+                    .arg(Cli::arg_modified())
+                    .arg(Cli::arg_size())
+                    .arg(Cli::arg_type())
+                    .arg(Cli::arg_tags())
+                    .arg(Cli::arg_comment())
                     .arg(Cli::arg_path()),
             )
             // status
@@ -470,14 +467,6 @@ impl<'a, 'b> Cli<'a, 'b> {
                 SubCommand::with_name(CMD_RM)
                     .about(CMD_RM_TEXT)
                     .arg(Cli::arg_db())
-                    .arg(
-                        Arg::with_name(KEY_DESC)
-                            .short(KEY_DESC_SHORT)
-                            .long(KEY_DESC_LONG)
-                            .value_name(KEY_DESCRIPTION)
-                            .help(KEY_DESC_HELP)
-                            .takes_value(true),
-                    )
                     .arg(Cli::arg_path()),
             )
             // CRUD: create
